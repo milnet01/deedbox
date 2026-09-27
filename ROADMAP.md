@@ -32,7 +32,7 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   and macOS CI legs have not run yet — no remote until DEED-0015 — so
   the first push is their first real run.
 
-- 🚧 [DEED-0002] **Vault core: create, lock, unlock, add and read a document.**
+- ✅ [DEED-0002] **Vault core: create, lock, unlock, add and read a document.**
   Build step 1 of `docs/brief.md`. Needs a spec first — the vault-format
   spec that ADR-0001 and `docs/design.md` defer to (key record, piece
   size, associated-data encoding, file layout). Serves S5 and S6. Done
@@ -47,6 +47,10 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Lanes: crypto, vault.
   Source: design-2026-09-27.
   Spec accepted 2026-09-27: `docs/specs/DEED-0002-vault-format.md`.
+  Shipped 2026-09-27 (cd8e739): round trip, wrong password, nothing
+  readable, truncation, binding and too-new all locked by tests, each
+  proven red by a deliberate break. Linux only so far; the Windows and
+  macOS legs first run when the repository gets a remote (DEED-0015).
 
 - 📋 [DEED-0003] **Index, safe saving and recovery on open.**
   Build step 2. The index, `vault/atomic.py`, the metadata-file recovery
