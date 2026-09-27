@@ -30,10 +30,11 @@ installing each and inspecting it:
 Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
 
 - **Keys.** Argon2id turns the password into a key that wraps a random
-  vault key, using the single-message encryption below. The vault key encrypts everything else. The Argon2id
-  settings, the salt and the wrapped vault key form the header record
-  that `vault` stores without reading (`docs/design.md`, rule 2). The
-  settings are chosen in build step 1 (`docs/brief.md`, Build order).
+  vault key, using the single-message encryption below. The vault key
+  encrypts everything else. The Argon2id settings, the salt and the
+  wrapped vault key form the header record that `vault` stores without
+  reading (`docs/design.md`, rule 2). The settings are chosen in build
+  step 1 (`docs/brief.md`, Build order).
 - **Document content.** Secretstream encrypts each document's content
   file. The reader must reject a stream whose last piece is not tagged
   final: secretstream does not flag a cut-off file by itself. Checked
@@ -44,10 +45,10 @@ Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
   the index and each metadata file.
 - **Binding.** Every ciphertext carries, as authenticated associated
   data, its role (content, metadata, index or key), its format number
-  and — for a document's two files — the document's random id. A file moved to another id, or relabelled,
-  fails to decrypt.
-- **Layout.** Secretstream's piece size, each file's byte layout and
-  the byte encoding of the associated data are part of the vault format,
+  and — for a document's two files — the document's random id. A file
+  moved to another id, or relabelled, fails to decrypt.
+- **Layout.** Secretstream's piece size, each file's byte layout and the
+  byte encoding of the associated data are part of the vault format,
   fixed by the vault-format spec written for build step 1.
 
 ## Consequences
