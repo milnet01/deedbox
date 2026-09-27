@@ -53,7 +53,9 @@ apps with expiry reminders are phone-only (`docs/brief.md`, Prior-art check).
 - **S4** — Open the app and anything expiring soon is already on screen.
   Something that already expired is marked expired, not hidden.
 - **S5** — With the app closed, nothing in the vault folder is readable:
-  file names, contents and dates are all opaque.
+  file names, contents and the documents' own dates are all opaque.
+  File sizes and save times on disk stay visible — narrowed to match the
+  agreed design and confirmed by the owner, 2026-09-27.
 - **S6** — Copy the vault folder to another computer, open it with the
   password, and every document is there. That copy is the whole backup.
 - **S7** — Any document comes back out as the original file, one at a time
