@@ -1,20 +1,17 @@
 # Deedbox
 
-> One line: what this does, for whom.
+> An encrypted vault on your own computer for receipts, warranties,
+> policies and ID — with search, and reminders before things expire.
 
 ## Status
 
-Just scaffolded. Nothing has been built and nothing has been decided —
-the first step is discovery (`~/.claude/workflow.md` § 3), which answers
-what problem this addresses and how we would know it is working.
+Early development. Not ready for use: there is no window yet, and no
+installer. The encrypted storage and crash recovery are built and
+tested on Linux.
 
 ## Install
 
-(Once there is something to install.)
-
-## Usage
-
-(Once there is something to use.)
+Not yet installable.
 
 ## Documentation
 
@@ -26,6 +23,12 @@ what problem this addresses and how we would know it is working.
 | [docs/design.md](docs/design.md) | The shape — the parts, and what may touch what |
 | [docs/decisions/](docs/decisions/) | Why a close call went the way it did |
 | [docs/specs/](docs/specs/) | The contract for one feature, where one was needed |
+| [SECURITY.md](SECURITY.md) | How to report a security problem |
+
+## Developing
+
+Needs [uv](https://docs.astral.sh/uv/). `./scripts/local-ci.sh` runs
+every check CI runs.
 
 ## License
 

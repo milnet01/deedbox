@@ -1,27 +1,27 @@
 # Security policy — Deedbox
 
-> **Delete this file if this project has no trust boundary.** A local
-> single-user tool that reads nothing it did not write and talks to
-> nothing may genuinely have none, and an empty policy is worse than no
-> file — it claims a promise nobody is keeping.
-
-`~/.claude/standards/security.md` owns what a trust boundary is and what
-defending one requires. This file is only what an outside reader needs.
-
 ## Trust boundaries
 
-> Where data crosses from somewhere less trusted to somewhere more
-> trusted: user input, files, the network, plugins, another process. One
-> line each — what crosses, and what is checked at the crossing.
+- **The vault folder.** Anyone holding it can change its bytes. Every
+  encrypted file is authenticated before use; a changed, cut-off or
+  swapped one is refused (`docs/specs/DEED-0002-vault-format.md` § 5).
+  The one plain file, the header, holds no secret.
+- **The password.** It unlocks the vault key through Argon2id; it is
+  never stored (`docs/decisions/ADR-0001-crypto-library.md`).
+- **Documents you add.** Stored as data and shown in Deedbox's own
+  window; never run.
+- **The network.** Deedbox makes no network connections.
 
-(Filled once design names them.)
+Deedbox protects the vault at rest. It does not protect a computer that
+is already compromised while the vault is open.
 
 ## Supported versions
 
-> Which versions get security fixes. Before 1.0, usually just the latest.
+Nothing has been released. Reports against the latest code on the main
+branch are welcome.
 
 ## Reporting a vulnerability
 
-> How to reach someone privately, and what to expect. A public issue
-> tracker is the wrong channel and saying so here is the point of the
-> section.
+Please do not open a public issue. Use GitHub's private
+vulnerability reporting on this repository: the **Security** tab, then
+**Report a vulnerability**.
