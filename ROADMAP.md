@@ -52,7 +52,7 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   proven red by a deliberate break. Linux only so far; the Windows and
   macOS legs first run when the repository gets a remote (DEED-0015).
 
-- 🚧 [DEED-0003] **Index, safe saving and recovery on open.**
+- ✅ [DEED-0003] **Index, safe saving and recovery on open.**
   Build step 2. The index, `vault/atomic.py`, the metadata-file recovery
   copies, the open-time order and reconciliation, and rebuild
   (`docs/design.md` § Which copy wins, § Opening, in order). Serves S8.
@@ -65,6 +65,10 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Source: design-2026-09-27.
   Spec accepted 2026-09-27:
   `docs/specs/DEED-0003-index-and-recovery.md`.
+  Shipped 2026-09-27 (96513eb): index, recovery on open, lock; INV-1
+  to INV-7 locked by tests, each proven red by a deliberate break except
+  atomicity, which INV-6 does not isolate (spec § 10). Linux only so far;
+  Windows and macOS first run with a remote (DEED-0015).
 
 - 📋 [DEED-0004] **Format versions and the migration framework.**
   Per-file format numbers, a resumable `migrate`, refusal of a vault
