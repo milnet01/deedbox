@@ -1,6 +1,6 @@
 # DEED-0003 — Keep an index, save safely, and recover on open
 
-**Status:** spec draft (2026-09-27).
+**Status:** accepted (2026-09-27).
 **Kind:** implement.
 **Source:** ROADMAP DEED-0003 (build step 2 of `docs/brief.md`; the
 recovery rules in `docs/design.md` § Which copy wins and § Opening, in
@@ -66,8 +66,10 @@ the vault is open and read by `Vault.documents()`.
 
 ### 4.3 Saving the index
 
-1. Copy the bytes of `index`, if it exists, to `index.prev` through
-   `atomic.write_bytes`.
+1. If `index` decrypted when this vault was opened, or has been saved
+   since, copy its bytes to `index.prev` through `atomic.write_bytes`.
+   Otherwise — after a fallback or a rebuild — skip this step, so a
+   corrupt `index` is never copied over `index.prev`.
 2. Write the new index to `index` through `atomic.write_bytes`.
 
 A crash between the two leaves `index` and `index.prev` both holding the
@@ -76,12 +78,17 @@ old index, which is a valid state.
 ### 4.4 Atomic writes, completed
 
 `atomic.write_stream` gains one step: after the replace, on Linux and
-macOS it opens the target's directory and calls `os.fsync` on it, so the
-replace survives a power cut. Windows has no directory handle to flush,
-and `os.replace` there is implemented as `MoveFileExW` with
-`MOVEFILE_REPLACE_EXISTING` (CPython 3.13 `Modules/posixmodule.c`,
-checked 2026-09-27); its behaviour is exercised by CI on Windows,
-not asserted here.
+macOS it opens the target's directory and calls `os.fsync` on it, so on
+Linux the replace survives a power cut. On macOS `fsync` does not empty
+the drive's own cache; where `fcntl.F_FULLFSYNC` exists, `atomic.py`
+uses it on the file before the replace, and the directory flush stays
+best effort (unrunnable here, so not asserted). `atomic.py` also gains
+`delete(path)`: unlink, then flush the directory the same way, so a
+removed file stays removed after a power cut. Windows has no directory
+handle to flush, and `os.replace` there is implemented as `MoveFileExW`
+with `MOVEFILE_REPLACE_EXISTING` (CPython 3.13 `Modules/posixmodule.c`,
+checked 2026-09-27); its behaviour is exercised by CI on Windows, not
+asserted here.
 
 ### 4.5 Write orders
 
@@ -91,7 +98,7 @@ The edit counter `edit` starts at 1 and rises by one with every change.
 |---|---|
 | `add` | content file → index → metadata file |
 | `update` | index → metadata file |
-| `remove` | delete metadata file → index → delete content file |
+| `remove` | delete metadata file (`atomic.delete`) → index → delete content file |
 
 This inserts the index step DEED-0002 § 4.7 left for this item. `add`
 deletes its content file only if a failure comes before the index is
@@ -107,8 +114,9 @@ nothing — DEED-0002 INV-2):
 0. **Check every prefix.** Read the first 6 bytes of `index`,
    `index.prev` and every `.c` and `.m` in `objects/`. A format number
    above what this release reads raises `VaultTooNew` here, before
-   anything is written; a wrong magic is left for step 5 to treat as
-   unreadable.
+   anything is written. A wrong magic is not refused here: step 4
+   treats such an index file as unreadable, step 5 such a `.m`, and a
+   `.c` with one fails when it is read.
 1. **Lock.** Take an exclusive, non-blocking OS lock on `lock`
    (`fcntl.flock` on Linux and macOS, `msvcrt.locking` on Windows). If
    another process or another `Vault` in this process holds it, raise
@@ -133,10 +141,11 @@ nothing — DEED-0002 INV-2):
 | `.m` readable | no entry | index gains the metadata file's object |
 | `.m` unreadable | no entry | left in place; id reported by `damaged()` |
 | `.m` missing | no entry | `.c` deleted — an unfinished add or remove |
+| `.m` readable, same `edit` | entry | nothing |
 
 6. **Save** the index (§4.3) if step 4 fell back or rebuilt, or steps 3
    and 5 changed anything. After a fallback this replaces the corrupt
-   `index` before any later save could copy it over `index.prev`.
+   `index`, and §4.3 step 1 leaves `index.prev` untouched.
 
 The rows are applied top to bottom and the first match wins; every row
 after the first two has a `.c` present. "Readable"
@@ -196,7 +205,8 @@ fixture isolates.
   *Test:* `tests/test_recovery.py::test_index_fallbacks` — corrupt one
   byte of `index`; then of both. A document added after the last save
   of `index.prev` is present only in metadata, so only the "no entry"
-  row can list it.
+  row can list it. After the first case's open, `index.prev` must still
+  decrypt to the index it held before.
   *Breaks when:* the fallback stops at the first failure, or a rebuild
   drops documents.
 
@@ -221,7 +231,10 @@ fixture isolates.
   *Test:* `tests/test_recovery.py::test_kill_during_writes` — a child
   adds and updates in a loop, printing each id once `add` returns; the
   parent kills it with `SIGKILL` (Linux and macOS; `TerminateProcess` on
-  Windows) at several delays, reopens, and reads every printed id.
+  Windows) as soon as it has printed N ids, for many values of N, then
+  reopens and reads every printed id. Across the runs, at least one must
+  have left a `.tmp` file or an orphan `.c` behind, or the test fails:
+  that is the evidence a kill landed mid-write.
   *Breaks when:* any write is not atomic or the write order is wrong.
 
 - **INV-7** — Opening with a wrong password, or a too-new format, writes
@@ -272,9 +285,9 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
   so a journal would be a second recovery mechanism to keep consistent.
 - **Timestamps instead of an edit counter** — rejected: clocks move
   backwards and differ between machines a vault is copied to.
-- **Rebuilding from metadata files on every open** — rejected: it
-  decrypts every file even when the index is sound; the index exists to
-  avoid that.
+- **Rebuilding from metadata files on every open, with no index** —
+  rejected: the index is what records an update whose metadata write a
+  crash interrupted (§4.5), so without it that update is lost.
 - **A lock taken by creating a file exclusively** — rejected: a crash
   leaves the file behind and the vault locked; an OS lock ends with the
   process.
@@ -285,6 +298,10 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
 - Reporting `damaged()` ids to the user — tracked by DEED-0005.
 - Read-only vaults, and a vault on a network share whose locks do not
   work — deferred; not yet queued.
+- On Windows, a refused second opener's step 0 reads while the holder
+  saves; if that makes the holder's replace fail, the save raises and
+  the next open recovers. Exercised by CI on Windows; deferred; not yet
+  queued.
 
 ## 10. What checks this
 
