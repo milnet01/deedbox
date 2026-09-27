@@ -21,15 +21,32 @@ permissions:
 
 jobs:
   gate:
-    runs-on: ubuntu-latest
+    # Every push runs on all three systems, at the Python floor and ceiling
+    # (docs/decisions/ADR-0002-python.md).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.12", "3.14"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       # Pinned by digest: a tag is mutable and runs a different program on the
       # day it changes (security.md § 8).
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      # Install the toolchain the script expects. Pin versions in the SCRIPT
-      # and read them from it, so one commit cannot use two different versions:
-      #   - run: pipx install ruff==$(./scripts/local-ci.sh --ruff-version)
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      # uv's version is pinned in the script; every other tool is locked in
+      # uv.lock and run through it.
+      - name: Install uv
+        run: python -m pip install "uv==$(./scripts/local-ci.sh --uv-version)"
 
       - name: Run the gate
+        env:
+          UV_PYTHON: ${{ matrix.python }}
         run: ./scripts/local-ci.sh

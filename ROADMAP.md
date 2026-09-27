@@ -19,7 +19,7 @@ The first public release, on Windows, macOS and Linux. Items follow the
 build order in `docs/brief.md` and the parts in `docs/design.md`. Signs
 of success are cited by their `docs/discovery.md` labels, S1 to S10.
 
-- 📋 [DEED-0001] **Project tooling: package layout, lint, tests, CI on three systems.**
+- 🚧 [DEED-0001] **Project tooling: package layout, lint, tests, CI on three systems.**
   `pyproject.toml` with Python 3.12 up to the pinned PySide6's ceiling,
   ruff, pytest, and `scripts/local-ci.sh` called by `ci.yml` on
   Windows, macOS and Linux runners. Includes the import-rule test that

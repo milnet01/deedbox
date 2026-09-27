@@ -29,14 +29,14 @@ cd "$(dirname "$0")/.."
 # as well as one value.
 DOCS_GLOB='docs/*|*.md|LICENSE'
 
-# Tool versions are pinned HERE and installed from here by the workflow. A
-# version pinned only in the workflow is a second copy: this script would take
-# whatever happened to be on PATH, so the same commit could pass locally and
-# fail on GitHub. Measured case: ruff's default rule set changed between
-# releases, so an unpinned run enforces a different set on each machine.
-# RUFF_VERSION='0.16.8'
+# Tool versions are pinned in ONE place each, never in the workflow. ruff and
+# pytest are pinned in pyproject.toml's dev group and locked in uv.lock; every
+# check runs through `uv run --locked`, so this script and CI use the same
+# versions. uv itself is pinned here and the workflow installs it from here.
+UV_VERSION='0.12.19'
 
 if [[ ${1:-} == --docs-glob ]]; then printf '%s\n' "$DOCS_GLOB"; exit 0; fi
+if [[ ${1:-} == --uv-version ]]; then printf '%s\n' "$UV_VERSION"; exit 0; fi
 
 DOCS_ONLY=0
 [[ ${1:-} == --docs ]] && DOCS_ONLY=1
@@ -65,16 +65,14 @@ fi
 
 # ── Checks that need a build or a full environment ──────────────────────────
 
+need uv
+run() { uv run --locked --group dev "$@"; }
+
 step 'lint'
-# e.g. need ruff && ruff check .
-
-step 'types'
-# e.g. need mypy && mypy
-
-step 'build'
-# e.g. cmake --build build
+run ruff check .
+run ruff format --check .
 
 step 'test'
-# e.g. need pytest && pytest -q     |     ctest --test-dir build --output-on-failure
+run pytest -q
 
 printf '\nlocal-ci: all checks passed.\n' >&2
