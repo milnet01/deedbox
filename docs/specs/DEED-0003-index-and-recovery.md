@@ -235,7 +235,12 @@ fixture isolates.
   reopens and reads every printed id. Across the runs, at least one must
   have left a `.tmp` file or an orphan `.c` behind, or the test fails:
   that is the evidence a kill landed mid-write.
-  *Breaks when:* any write is not atomic or the write order is wrong.
+  *Breaks when:* the write order or a reconcile row is wrong, so a
+  killed run leaves a vault that will not open or has lost a returned
+  document. It does not isolate atomicity: with in-place writes the
+  reconcile rows still recovered every run (found while implementing,
+  2026-09-27), so `atomic.py`'s replace is checked by reading it, as
+  § 10 records.
 
 - **INV-7** — Opening with a wrong password, or a too-new format, writes
   nothing — the recovery steps run only after a successful unlock.
@@ -315,6 +320,7 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
 | INV-6 | `tests/test_recovery.py::test_kill_during_writes` |
 | INV-7 | `tests/test_recovery.py::test_refusals_write_nothing` |
 | Directory flush after replace (§4.4) | **nothing** — no test can pull the power; the call is visible in `atomic.py` only |
+| Atomic replace itself (§4.4) | **nothing** — INV-6 passes against in-place writes too (see INV-6); checked by reading `atomic.py` |
 | Windows replace behaviour | **`Partial:`** INV-6 on the Windows CI runner; not asserted locally |
 
 ## 11. Cross-doc impact

@@ -29,5 +29,9 @@ class VaultTooNew(DeedboxError):
     """A format number above what this release reads."""
 
 
+class VaultInUse(DeedboxError):
+    """Another Deedbox, or another Vault in this process, has it open."""
+
+
 class DocumentMissing(DeedboxError):
     """No document with that id is in the vault."""

@@ -145,8 +145,8 @@ def test_too_new(tmp_path):
     data = bytearray(content.read_bytes())
     data[4:6] = (2).to_bytes(2, "big")
     content.write_bytes(bytes(data))
-    reopened = Vault.open(folder, "correct horse")
+    # DEED-0003 § 4.6 step 0 refuses a newer file when the vault opens.
     before = snapshot(folder)
     with pytest.raises(VaultTooNew):
-        reopened.read(doc_id)
+        Vault.open(folder, "correct horse")
     assert snapshot(folder) == before
