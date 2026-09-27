@@ -9,8 +9,8 @@ item off the queue and say which part it belongs in and what it may
 touch.
 
 **Status:** reviewed 2026-09-27 (`review-contract`, three loops, capped)
-— waiting for the owner's agreement. Built from `docs/discovery.md`; its sign labels (S1–S10)
-are cited below.
+— waiting for the owner's agreement. Built from `docs/discovery.md`;
+its sign labels (S1–S10) are cited below.
 
 ## The parts
 
@@ -110,8 +110,8 @@ app ─► ui ─► vault ─► crypto
   random id: its content, and a small metadata file holding its title,
   category, tags, note, dates, original filename, file type, extracted
   text and extraction status (not yet run, done, or no OCR tool).
-  Editing metadata rewrites only the small file and the index. Rebuilding the index reads
-  the metadata files alone; nothing is re-extracted. No title, date,
+  Editing metadata rewrites only the small file and the index.
+  Rebuilding the index reads the metadata files alone; nothing is re-extracted. No title, date,
   category or original filename appears in any name (S5).
 - **Format version.** The vault header and every file in the vault
   carry a format number from the first release. Opening a vault runs
