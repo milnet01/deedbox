@@ -1,6 +1,6 @@
 # DEED-0002 — Define the vault format and build the vault core
 
-**Status:** spec draft (2026-09-27).
+**Status:** accepted (2026-09-27).
 **Kind:** implement.
 **Source:** ROADMAP DEED-0002 (broken out of `docs/design.md`; the format
 `docs/decisions/ADR-0001-crypto-library.md` defers to "the vault-format
@@ -81,6 +81,7 @@ The key record, as `crypto` produces it, is UTF-8 JSON:
 
 ```json
 {
+  "version": 1,
   "kdf": "argon2id13",
   "opslimit": 3,
   "memlimit": 268435456,
@@ -102,6 +103,13 @@ The key record, as `crypto` produces it, is UTF-8 JSON:
   value, not the assumption.
 - **Opening reads the settings from the record**, never from constants,
   so raising them for new vaults never breaks an old one.
+- **`unlock` validates the record before deriving anything**, because the
+  folder is untrusted: `version` above 1 raises `VaultTooNew`; any other
+  `version`, `kdf` or `wrap` value, `parallelism` other than 1, `opslimit`
+  outside 1–20, `memlimit` outside 8192 bytes–4 GiB, or a salt, nonce or
+  wrapped key of the wrong length raises `VaultCorrupt`. So a tampered
+  record cannot make an open hang or reach libsodium with values it
+  rejects, and a failed derivation of a valid record is a memory failure.
 - **The vault key** is 32 random bytes. The Argon2id output (32 bytes)
   wraps it with single-message XChaCha20-Poly1305 under the associated
   data for role `key` (§4.4).
@@ -150,7 +158,7 @@ b"deedbox\x00" + role + b"\x00" + str(format) + b"\x00" + doc_id
 
 `role` is ASCII `content`, `metadata`, `index` or `key`. `format` is the
 file's format number in ASCII decimal; for `key` it is the key record's
-own version, `1`, fixed inside `crypto` and independent of the header's
+`version` field, read from the record and independent of the header's
 `format`, so a header bump never breaks the unwrap. `doc_id` is the
 document's hex id for `content` and `metadata`, and empty for `index`
 and `key`. No field can contain a NUL byte, so the encoding is
@@ -228,11 +236,14 @@ class Vault:
 
 `src/deedbox/vault/layout.py` owns the paths and the file prefixes;
 `vault/documents.py` owns reading and writing `<id>.c` and `<id>.m`;
-`vault/atomic.py` owns write-new, flush, replace (`os.replace`). It
-writes `<target>.tmp` in the target's own directory, so the replace never
-crosses a file system. A leftover `*.tmp` is an interrupted write;
-DEED-0003's recovery deletes it. DEED-0003 hardens and tests `atomic.py`
-on all three systems; this item only uses it.
+`vault/atomic.py` owns write-new, flush, replace (`os.replace`). This
+item creates it with two entry points, `write_bytes(target, data)` and a
+`write_stream(target)` context manager that yields a binary file and
+replaces the target only on a clean exit. It writes `<target>.tmp` in the
+target's own directory, so the replace never crosses a file system. A
+leftover `*.tmp` is an interrupted write; DEED-0003's recovery deletes
+it. DEED-0003 tests `atomic.py` on all three systems and saves the index
+through it.
 
 `create` passes `opslimit` and `memlimit` to `new_key_record`; only
 tests pass them, to keep derivation fast. `open` takes none — it reads
@@ -243,7 +254,9 @@ the settings from the record (§4.2).
 - `add` streams the source file through `encrypt_stream` into
   `objects/<id>.c`, then seals and writes `objects/<id>.m`, each through
   `atomic.py`. If writing the `.m` fails, `add` deletes the `.c` before
-  re-raising. No decrypted byte is written anywhere.
+  re-raising. This item writes no `index`; DEED-0003 inserts the index
+  write between the two, giving `docs/design.md`'s order (content, then
+  index, then metadata file). No decrypted byte is written anywhere.
 - `read` decrypts `<id>.c` into memory and returns it. A missing file
   raises `DocumentMissing`; any failed piece, missing final tag or
   trailing byte raises `VaultCorrupt`, never a shortened result.
@@ -296,9 +309,10 @@ Each names the rule its fixture isolates.
   two documents: same magic, same format, valid ciphertext under the right
   key, so only the id in the associated data can reject them.
   `tests/test_crypto.py::test_role_binding` — `seal` under the `metadata`
-  associated data and `unseal` under the `index` associated data, same
-  id and format. A role swap between whole files is rejected by the
-  magic first, so the role is tested where nothing else can reject it.
+  associated data and `unseal` under the `content` associated data, same
+  id and format, so the two differ only in the role. A role swap between
+  whole files is rejected by the magic first, so the role is tested where
+  nothing else can reject it.
   *Breaks when:* the associated data omits the id or the role.
 
 - **INV-6** — A password entered in decomposed form (NFD) opens a vault
@@ -318,8 +332,11 @@ Each names the rule its fixture isolates.
 - **INV-8** — A header, or any encrypted file, whose format number is
   above 1 raises `VaultTooNew` and changes nothing on disk.
   *Test:* `tests/test_vault.py::test_too_new` — a header with `format`
-  2, and a `.c` whose prefix format is 2 (its ciphertext is otherwise
-  valid, so only the prefix check can reject it).
+  2, a key record whose `version` is 2, and a `.c` whose prefix format
+  is 2 (its ciphertext is otherwise valid, so only the prefix check can
+  raise `VaultTooNew` rather than `VaultCorrupt`). Each compares the
+  folder's file list, modification times and bytes before and after, as
+  INV-2 does.
   *Breaks when:* a newer vault is opened, guessed at, or rewritten.
 
 - **INV-9** — Only `crypto` imports `nacl` (`docs/design.md`, rule 2),
