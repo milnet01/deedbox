@@ -183,13 +183,17 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Lanes: packaging.
   Source: design-2026-09-27.
 
-- 📋 [DEED-0015] **Public repository, bug tracker and security contact.**
+- ✅ [DEED-0015] **Public repository, bug tracker and security contact.**
   Needs the owner's say on where the repository lives. `SECURITY.md`
   already exists and needs a real contact.
   **Layman:** A public home for the code, a place to report problems, and a private way to report security holes.
   Kind: chore.
   Lanes: repo.
   Source: design-2026-09-27.
+  Shipped 2026-09-27: public at https://github.com/milnet01/deedbox
+  (owner's choice), issues on, private vulnerability reporting on,
+  SECURITY.md names it. The first three-OS CI run is GitHub Actions run
+  36312128466; its result had not been seen when this was written.
 
 - 📋 [DEED-0016] **Trademark check on the name Deedbox.**
   `docs/brief.md` records only a web search. Decide before the first
