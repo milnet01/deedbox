@@ -43,12 +43,12 @@ Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
   (`crypto_aead_xchacha20poly1305_ietf`) protects the wrapped vault key,
   the index and each metadata file.
 - **Binding.** Every ciphertext carries, as authenticated associated
-  data, its file's random id, its role (content, metadata, index or key)
-  and its format number. A file moved to another id, or relabelled,
+  data, its role (content, metadata, index or key), its format number
+  and — for a document's two files — the document's random id. A file moved to another id, or relabelled,
   fails to decrypt.
-- **Layout.** Secretstream's piece size and each file's byte layout are
-  part of the vault format, fixed by the vault-format spec written for
-  build step 1.
+- **Layout.** Secretstream's piece size, each file's byte layout and
+  the byte encoding of the associated data are part of the vault format,
+  fixed by the vault-format spec written for build step 1.
 
 ## Consequences
 
@@ -56,11 +56,13 @@ Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
   crypto code. Whether Rolodex should follow is its own question.
 - Changing the password, or raising the Argon2id settings, rewraps the
   vault key and rewrites only the header. No document is re-encrypted.
+- A format change to content files re-encrypts every document it
+  touches, because the format number is bound into each ciphertext.
 - PyNaCl releases less often than `cryptography`. It is a thin wrapper;
   libsodium underneath does the work. If PyNaCl stops being maintained,
   the replacement must still read that vault format. It uses only
-  secretstream and XChaCha20-Poly1305, which any libsodium binding
-  offers.
+  libsodium's Argon2id, secretstream and XChaCha20-Poly1305, with the
+  same parameters.
 - libsodium is a compiled library, so every installer must ship it.
   PyNaCl's prebuilt packages include it on all three systems.
 - The independent security review before the first public release
