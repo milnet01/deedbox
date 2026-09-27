@@ -8,8 +8,8 @@ agreed — `~/.claude/workflow.md` § 2. It passes when someone can take any
 item off the queue and say which part it belongs in and what it may
 touch.
 
-**Status:** draft, 2026-09-27 — waiting for the cold review and the
-owner's agreement. Built from `docs/discovery.md`; its sign labels (S1–S10)
+**Status:** reviewed 2026-09-27 (`review-contract`, three loops, capped)
+— waiting for the owner's agreement. Built from `docs/discovery.md`; its sign labels (S1–S10)
 are cited below.
 
 ## The parts
@@ -52,7 +52,8 @@ The rules, strongest first. A test can check each by reading imports.
    inside the vault folder. Every other part gets documents and the index
    through the `Vault` object in `vault/vault.py`.
 4. **Only `export` writes decrypted content to disk**, and only when the
-   user asked for an export. No part writes a decrypted temporary file,
+   user asked for an export, and never to a place inside the vault
+   folder. No part writes a decrypted temporary file,
    ever — not for viewing, not for OCR, not for printing.
 5. **`search`, `expiry` and `suggest` are pure.** They take data in and
    return answers. No disk, no network, no Qt, no clock of their own —
@@ -93,14 +94,23 @@ app ─► ui ─► vault ─► crypto
   behaves differently on Windows.
 - **Which copy wins.** The index is the truth; each metadata file is its
   document's recovery copy, carrying an edit counter the index also
-  records. Adding writes content, then index, then metadata file; editing
-  writes index, then metadata file. On open, a metadata file missing or
-  behind the index is rewritten from it, and a content file the index
-  does not list is an unfinished add and is removed.
+  records. Adding writes content, then index, then metadata file.
+  Editing writes index, then metadata file. Removing deletes the metadata
+  file, then writes the index, then deletes the content file.
+- **Opening, in order.** Run `migrate`. Load the index; if it will not
+  decrypt, load its previous copy; if neither will, rebuild from the
+  metadata files. Then reconcile against the files on disk:
+  - a metadata file ahead of the index, or not listed in it, updates the
+    index;
+  - an index entry whose metadata file is behind or missing has that file
+    rewritten from the index;
+  - a content file with neither an index entry nor a metadata file is
+    left from an unfinished add or remove, and is deleted.
 - **Names on disk.** Each document is two encrypted files sharing one
   random id: its content, and a small metadata file holding its title,
-  category, tags, note, dates and extracted text. Editing metadata
-  rewrites only the small file and the index. Rebuilding the index reads
+  category, tags, note, dates, original filename, file type, extracted
+  text and extraction status (not yet run, done, or no OCR tool).
+  Editing metadata rewrites only the small file and the index. Rebuilding the index reads
   the metadata files alone; nothing is re-extracted. No title, date,
   category or original filename appears in any name (S5).
 - **Format version.** The vault header and every file in the vault
@@ -116,7 +126,9 @@ app ─► ui ─► vault ─► crypto
 - **Dates.** Calendar dates without times, stored as ISO text
   (`2026-09-27`). Compared in the user's local day.
 - **Background work.** OCR and text extraction run in worker threads
-  that `ui` owns, and report back through Qt signals. Filing a document never waits
+  that `ui` owns, and report back through Qt signals. When a vault opens,
+  `ui` queues every document whose extraction has not run, and those
+  marked no OCR tool once the tool is present. Filing a document never waits
   for them.
 
 ## The stack, and what it rules out
@@ -165,3 +177,4 @@ app ─► ui ─► vault ─► crypto
 |------|------|-------|----|----|----|----|---------|
 | 1 | 2026-09-27 | 2 (`review-lane`; every lane held every question) | 0 | 4 | 6 | — | Verified 10 / fixed 10 / dismissed 1. Both lanes found 6 of the 10; two came from resolving lanes' open questions (log location, visible file sizes and times). Dismissed: "Python 3.12 shared with Rolodex" — names the shared language, changes nothing built. Unrunnable region declared: Windows and macOS behaviour. |
 | 2 | 2026-09-27 | 2 (`review-lane`; every lane held every question) | 0 | 2 | 3 | — | Verified 5 / fixed 5 / dismissed 3. Both lanes found the rebuild-needs-extract contradiction (merged). Two came from open questions (the Tesseract-pipe fallback; which encryption the metadata files use). 4 of 5 landed on loop-1 text. Dismissed: the workflow § 2 citation (correct, § 2 is the gates); Python version shared with Rolodex; no Python upper bound (PySide6's own requirement enforces it). |
+| 3 | 2026-09-27 | 2 (`review-lane`; every lane held every question) | 0 | 0 | 6 | — | Verified 6 / fixed 6 / dismissed 1. Both lanes found the backup-index recovery deleting filed documents (merged). Two came from open questions (migrate-before-recovery order; export into the vault folder). Dismissed: no Python upper bound (PySide6's own requirement enforces it). **Cap reached — ship.** Final-loop own-fix share 5 of 6, but unreadable: the armed change was the whole document. By substance these are unpropagated consequences of loop 1's metadata-file decision, all in storage recovery, not repairs of repairs. No second share: the span is the whole document. Routed: storage format and recovery get a spec before build step 1. |
