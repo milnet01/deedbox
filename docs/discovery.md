@@ -11,53 +11,69 @@ be things you could actually observe.
 `~/.claude/workflow.md` § 2. It passes when a stranger could read it and
 say whether a given feature serves it.
 
-**Status:** not started.
+**Status:** agreed by the owner, 2026-09-27.
+Drawn from `docs/brief.md`; decisions recorded there are not reopened here.
 
 ## The problem
 
-> What hurt is this addressing? Specific, not aspirational. *"I lose
-> context between sessions and re-explain the project every time"* is the
-> right level; *"better productivity"* is not.
+Personal paperwork has no safe, findable home. Receipts, warranties,
+insurance policies, vehicle papers, ID and medical letters sit in a paper
+folder, loose PDFs in Downloads, and photos on a phone.
+
+Two things go wrong:
+
+- **You can't find it.** The appliance breaks and the receipt is nowhere.
+- **Dates pass unnoticed.** You learn the warranty ended after it mattered.
+
+The existing answers ask too much. Paperless-ngx needs a Docker server.
+Cloud drives put ID documents on someone else's computer. The encrypted
+apps with expiry reminders are phone-only (`docs/brief.md`, Prior-art check).
 
 ## Who it is for
 
-> One to three, each written as "a person who…". Concrete, not a
-> category. Often that is you — say so, it is useful.
+- **A person who keeps important papers in three half-places** — a folder,
+  a Downloads directory, a phone — and can't lay hands on the right one
+  when it's needed.
+- **A person who has never heard of encryption and won't run a server**,
+  but wants their passport scan and medical letters private, on their own
+  computer, on Windows, macOS or Linux.
+- **The owner.** Rolodex, finbreak and Contact List cover passwords, money
+  and people. Paperwork is the missing drawer.
 
 ## Signs it is working
 
-> Not *shipped* — working. Each written so that you could tell, by using
-> the thing, whether it is true yet. If you cannot imagine the moment you
-> would observe it, it is not one of these.
->
-> **Each gets a LABEL, because the roadmap gate points back at it** —
-> every sign must be claimed by at least one item before the queue is
-> agreed (`~/.claude/workflow.md` § 5). Without one there is nothing to
-> point at, and the gate becomes two lists a human matches by eye.
->
-> **The scheme is yours; `S<n>` below is a worked example, not a default.**
-> `check-queue` reads whatever label your roadmap actually cites its signs
-> by rather than choosing one for you. Keep `S1`, `S2` or replace them —
-> what matters is that the roadmap uses the same spelling. **Whatever you
-> pick, pick one**: where the roadmap can name NO sign there is no scheme,
-> the coverage check cannot run, and it may make no claim in either
-> direction. One sign the roadmap cannot name is unlabelled on its own, and
-> the check still runs for the rest.
-> Swept 2026-09-07: this said `S<n>` was the DEFAULT, matching `workflow.md`
-> § 3 as it then read; § 3 now says the document proposes no scheme, so the
-> word went from both rather than from one.
->
-> **Ids are never reused and never renumbered.** Delete a sign and its id
-> retires with it — the next one still takes the next unused number.
-> Renumbering is the one way this can fail, because every citation
-> elsewhere keeps pointing at whatever now holds the old number, and
-> nothing announces it.
-
-- **S1** — <something you could observe, in one line>.
-- **S2** — <another>.
+- **S1** — Someone who didn't build it installs Deedbox on Windows, macOS
+  or Linux, creates a vault and files a first document without help.
+- **S2** — Before a vault is created, the app says in plain words that a
+  forgotten password means the documents are gone for good.
+- **S3** — You find a document by typing something you remember about it —
+  a word from its title, tag or note, or a model number printed inside a
+  scan — not by browsing. On Windows and macOS this means the installers
+  bundle the text-reading (OCR) tool; kept by the owner 2026-09-27.
+- **S4** — Open the app and anything expiring soon is already on screen.
+  Something that already expired is marked expired, not hidden.
+- **S5** — With the app closed, nothing in the vault folder is readable:
+  file names, contents and dates are all opaque.
+- **S6** — Copy the vault folder to another computer, open it with the
+  password, and every document is there. That copy is the whole backup.
+- **S7** — Any document comes back out as the original file, one at a time
+  or the whole vault at once, and opens without Deedbox.
+- **S8** — Pull the power mid-filing, and the vault still opens with every
+  document filed before that moment.
+- **S9** — A vault made with an older release opens in the newest one.
+- **S10** — The owner is still filing their own real paperwork into it a
+  week after first using it, instead of going back to the Downloads folder.
 
 ## What it deliberately does not do
 
-> The only line that catches scope creep, which is the main way a project
-> stops being what was wanted. An empty section is a fair answer, but the
-> heading is worth answering rather than deleting.
+- **No cloud, no sync, no server — ever, not just in the first release.**
+  Nothing leaves the machine. Decided by the owner 2026-09-27.
+- **No sharing and no multiple users.** One person, one computer.
+- **No automatic filing rules.** It suggests; it never files on its own.
+  A silent misfile is worse than no help.
+- **No phone app.**
+- **No scanner import.** Scan with a phone and drag the file in.
+- **No reminders while the app is closed**, in the first release. Upcoming
+  dates show when the app opens.
+- **Not a small Paperless.** Paperless-ngx's feature list is a checklist of
+  what people need, not a target to match.

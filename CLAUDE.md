@@ -2,7 +2,7 @@
 
 ## Where this project is
 
-**State:** 1 — Unstated. Nothing has been written about what this is for.
+**State:** 2 — Unshaped. Discovery agreed (`docs/discovery.md`); design not started.
 **In flight:** nothing.
 
 > Keep the two lines above true, and keep them to two lines. They are
