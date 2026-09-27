@@ -136,7 +136,7 @@ app ─► ui ─► vault ─► crypto
 
 | Choice | Why | Runner-up |
 |---|---|---|
-| **Python 3.12 or newer** | The owner's choice; shared with Rolodex and finbreak. 3.10 leaves security support in October 2026. [ADR-0002](decisions/ADR-0002-python.md) | C++ |
+| **Python 3.12 up to the newest the pinned PySide6 supports** | The owner's choice; shared with Rolodex and finbreak. 3.10 leaves security support in October 2026. [ADR-0002](decisions/ADR-0002-python.md) | C++ |
 | **PySide6** (Qt for Python) | Qt's official Python binding. `QtPdf` shows a PDF from memory with no temporary file — checked 2026-09-27 by loading a PDF from an in-memory buffer. LGPL, compatible with GPL-3.0. | PyQt6 |
 | **PyNaCl** (libsodium) | Argon2id key derivation and a documented recipe for encrypting large files in pieces, from one well-known library. [ADR-0001](decisions/ADR-0001-crypto-library.md) | `cryptography` |
 | **pypdf** | Reads the text already inside digital PDFs without Qt, so `extract` stays testable headless. | Qt's own PDF text extraction |

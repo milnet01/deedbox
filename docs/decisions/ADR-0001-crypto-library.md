@@ -22,14 +22,15 @@ installing each and inspecting it:
   one-shot calls. A large file would need our own splitting scheme.
 - **PyNaCl** wraps libsodium. It has Argon2id and libsodium's
   "secretstream" recipe, which encrypts a file as a sequence of pieces
-  and detects pieces that were removed, reordered or cut off.
+  and lets the reader detect pieces that were removed, reordered or cut
+  off.
 
 ## Decision
 
 Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
 
 - **Keys.** Argon2id turns the password into a key that wraps a random
-  vault key. The vault key encrypts everything else. The Argon2id
+  vault key, using the single-message encryption below. The vault key encrypts everything else. The Argon2id
   settings, the salt and the wrapped vault key form the header record
   that `vault` stores without reading (`docs/design.md`, rule 2). The
   settings are chosen in build step 1 (`docs/brief.md`, Build order).
@@ -39,8 +40,15 @@ Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
   2026-09-27 — with the final piece dropped, the first piece still
   decrypted with no error.
 - **Everything small.** XChaCha20-Poly1305 single-message encryption
-  (`crypto_aead_xchacha20poly1305_ietf`) protects the index and each
-  metadata file.
+  (`crypto_aead_xchacha20poly1305_ietf`) protects the wrapped vault key,
+  the index and each metadata file.
+- **Binding.** Every ciphertext carries, as authenticated associated
+  data, its file's random id, its role (content, metadata, index or key)
+  and its format number. A file moved to another id, or relabelled,
+  fails to decrypt.
+- **Layout.** Secretstream's piece size and each file's byte layout are
+  part of the vault format, fixed by the vault-format spec written for
+  build step 1.
 
 ## Consequences
 
@@ -50,8 +58,9 @@ Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
   vault key and rewrites only the header. No document is re-encrypted.
 - PyNaCl releases less often than `cryptography`. It is a thin wrapper;
   libsodium underneath does the work. If PyNaCl stops being maintained,
-  the replacement must still read the same secretstream and
-  XChaCha20-Poly1305 formats, which any libsodium binding can.
+  the replacement must still read that vault format. It uses only
+  secretstream and XChaCha20-Poly1305, which any libsodium binding
+  offers.
 - libsodium is a compiled library, so every installer must ship it.
   PyNaCl's prebuilt packages include it on all three systems.
 - The independent security review before the first public release
