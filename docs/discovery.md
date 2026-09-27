@@ -49,13 +49,12 @@ apps with expiry reminders are phone-only (`docs/brief.md`, Prior-art check).
 - **S3** — You find a document by typing something you remember about it —
   a word from its title, tag or note, or a model number printed inside a
   scan — not by browsing. On Windows and macOS this means the installers
-  bundle the text-reading (OCR) tool; kept by the owner 2026-09-27.
+  bundle the text-reading (OCR) tool.
 - **S4** — Open the app and anything expiring soon is already on screen.
   Something that already expired is marked expired, not hidden.
 - **S5** — With the app closed, nothing in the vault folder is readable:
   file names, contents and the documents' own dates are all opaque.
-  File sizes and save times on disk stay visible — narrowed to match the
-  agreed design and confirmed by the owner, 2026-09-27.
+  File sizes and save times on disk stay visible.
 - **S6** — Copy the vault folder to another computer, open it with the
   password, and every document is there. That copy is the whole backup.
 - **S7** — Any document comes back out as the original file, one at a time
@@ -69,7 +68,7 @@ apps with expiry reminders are phone-only (`docs/brief.md`, Prior-art check).
 ## What it deliberately does not do
 
 - **No cloud, no sync, no server — ever, not just in the first release.**
-  Nothing leaves the machine. Decided by the owner 2026-09-27.
+  Nothing leaves the machine.
 - **No sharing and no multiple users.** One person, one computer.
 - **No automatic filing rules.** It suggests; it never files on its own.
   A silent misfile is worse than no help.

@@ -238,9 +238,8 @@ fixture isolates.
   *Breaks when:* the write order or a reconcile row is wrong, so a
   killed run leaves a vault that will not open or has lost a returned
   document. It does not isolate atomicity: with in-place writes the
-  reconcile rows still recovered every run (found while implementing,
-  2026-09-27), so `atomic.py`'s replace is checked by reading it, as
-  § 10 records.
+  reconcile rows still recovered every run, so `atomic.py`'s replace
+  is checked by reading it, as § 10 records.
 
 - **INV-7** — Opening with a wrong password, or a too-new format, writes
   nothing — the recovery steps run only after a successful unlock.
