@@ -93,18 +93,26 @@ The edit counter `edit` starts at 1 and rises by one with every change.
 | `update` | index → metadata file |
 | `remove` | delete metadata file → index → delete content file |
 
-This inserts the index step DEED-0002 § 4.7 left for this item. `add`'s
-clean-up of a content file whose later write fails, from DEED-0002,
-stays.
+This inserts the index step DEED-0002 § 4.7 left for this item. `add`
+deletes its content file only if a failure comes before the index is
+saved. Once the index is saved the document exists: if the metadata
+write then fails, the content file stays and the next open rewrites the
+metadata file from the index.
 
 ### 4.6 Opening, in order
 
 After `crypto.unlock` succeeds (so a wrong password still writes
 nothing — DEED-0002 INV-2):
 
+0. **Check every prefix.** Read the first 6 bytes of `index`,
+   `index.prev` and every `.c` and `.m` in `objects/`. A format number
+   above what this release reads raises `VaultTooNew` here, before
+   anything is written; a wrong magic is left for step 5 to treat as
+   unreadable.
 1. **Lock.** Take an exclusive, non-blocking OS lock on `lock`
    (`fcntl.flock` on Linux and macOS, `msvcrt.locking` on Windows). If
-   another process holds it, raise `VaultInUse`. The lock is released by
+   another process or another `Vault` in this process holds it, raise
+   `VaultInUse`. `create` takes the same lock. The lock is released by
    `close`, and by the OS if the process dies.
 2. **Migrate.** DEED-0004's step. Until it exists, DEED-0002's refusal of
    a newer format is the whole of it.
@@ -117,18 +125,23 @@ nothing — DEED-0002 INV-2):
 
 | On disk | Index | Action |
 |---|---|---|
+| no `.c`, no `.m` | entry | entry dropped — nothing of the document is left |
+| no `.c`, `.m` present | either | files left in place; id reported by `damaged()` |
 | `.m` readable, `edit` above the index's | entry | index takes the metadata file's object |
-| `.m` readable | no entry | index gains the metadata file's object |
+| `.m` readable, `edit` below the index's | entry | metadata file rewritten from the index |
 | `.m` missing or unreadable | entry | metadata file rewritten from the index |
-| `.c` only | no entry | deleted — an unfinished add or remove |
+| `.m` readable | no entry | index gains the metadata file's object |
 | `.m` unreadable | no entry | left in place; id reported by `damaged()` |
-| no `.c` | entry | entry kept; id reported by `damaged()` |
+| `.m` missing | no entry | `.c` deleted — an unfinished add or remove |
 
-6. **Save** the index (§4.3) if steps 3–5 changed anything.
+6. **Save** the index (§4.3) if step 4 fell back or rebuilt, or steps 3
+   and 5 changed anything. After a fallback this replaces the corrupt
+   `index` before any later save could copy it over `index.prev`.
 
-The rows are applied top to bottom and the first match wins. "Readable"
-means it decrypts and parses; `VaultTooNew` from any file still stops the
-open (DEED-0002 INV-8).
+The rows are applied top to bottom and the first match wins; every row
+after the first two has a `.c` present. "Readable"
+means it decrypts and parses. Step 0 has already refused any newer
+file, so nothing in steps 1–6 meets one.
 
 ### 4.7 What other parts call
 
@@ -147,10 +160,11 @@ def remove(self, doc_id: str) -> None: ...
 def damaged(self) -> list[str]: ...               # ids found by reconcile
 ```
 
-`update` merges `changes` into the entry, refuses to change `id`, raises
-`edit` by one, and writes index then metadata file. `remove` of an
-unknown id raises `DocumentMissing`. The index code lives in
-`src/deedbox/vault/index.py` (load, save, reconcile) and
+`update` merges `changes` into the entry, raises `ValueError` if
+`changes` holds `id` or `edit`, raises `edit` by one, and writes index
+then metadata file. `remove` of an unknown id raises `DocumentMissing`.
+The index code lives in `src/deedbox/vault/index.py` (load, save,
+reconcile) and
 `src/deedbox/vault/rebuild.py` (rebuild from metadata files), as
 `docs/design.md` names them.
 
@@ -196,7 +210,9 @@ fixture isolates.
 - **INV-5** — A second `Vault.open` of a vault already open raises
   `VaultInUse`, from another process as well as from the same one.
   *Test:* `tests/test_lock.py::test_second_open_refused` — a child
-  process opens the vault and waits; the parent's open must raise.
+  process opens the vault and waits, and the parent's open must raise;
+  then, in one process, a second `Vault.open` while the first is open
+  must raise, and succeed after the first is closed.
   *Breaks when:* no lock is taken, or it is released before `close`.
 
 - **INV-6** — Killing the process during a run of adds and updates never
@@ -210,10 +226,13 @@ fixture isolates.
 
 - **INV-7** — Opening with a wrong password, or a too-new format, writes
   nothing — the recovery steps run only after a successful unlock.
-  *Test:* DEED-0002's `tests/test_vault.py::test_wrong_password` and
-  `test_too_new`, run against a vault holding a leftover `.tmp` and an
-  orphan content file, which a premature recovery would delete.
-  *Breaks when:* recovery runs before `unlock` or the format check.
+  *Test:* `tests/test_recovery.py::test_refusals_write_nothing` — a
+  vault holding a leftover `.tmp` and an orphan content file, which a
+  premature recovery would delete, opened with a wrong password, then
+  with a too-new header, then with one too-new `.m`. Each compares the
+  folder before and after, and the `.m` case isolates step 0: the
+  header is current, so only the per-file prefix check can refuse it.
+  *Breaks when:* recovery runs before `unlock` or before step 0.
 
 ## 6. Failure modes
 
@@ -240,7 +259,7 @@ fixture isolates.
 | `tests/test_recovery.py::test_edit_counter` | INV-4 |
 | `tests/test_lock.py::test_second_open_refused` | INV-5 |
 | `tests/test_recovery.py::test_kill_during_writes` | INV-6 |
-| `tests/test_vault.py::test_wrong_password`, `test_too_new` | INV-7 |
+| `tests/test_recovery.py::test_refusals_write_nothing` | INV-7 |
 
 Each must be seen failing once against a deliberately broken
 implementation before it counts. CI runs them on Windows, macOS and
@@ -277,14 +296,18 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
 | INV-4 | `tests/test_recovery.py::test_edit_counter` |
 | INV-5 | `tests/test_lock.py::test_second_open_refused` |
 | INV-6 | `tests/test_recovery.py::test_kill_during_writes` |
-| INV-7 | `tests/test_vault.py::test_wrong_password`, `test_too_new` |
+| INV-7 | `tests/test_recovery.py::test_refusals_write_nothing` |
 | Directory flush after replace (§4.4) | **nothing** — no test can pull the power; the call is visible in `atomic.py` only |
 | Windows replace behaviour | **`Partial:`** INV-6 on the Windows CI runner; not asserted locally |
 
 ## 11. Cross-doc impact
 
-None: `docs/design.md` already states these rules, and DEED-0002's spec
-already hands the index write and `*.tmp` clean-up to this item.
+`docs/design.md` already states these rules, and DEED-0002's spec
+already hands the index write and `*.tmp` clean-up to this item. One
+test moves: step 0 refuses a too-new `.c` at open, so the file case in
+DEED-0002's `tests/test_vault.py::test_too_new` expects `VaultTooNew`
+from `Vault.open` rather than from `read`. DEED-0002 INV-8 names no step,
+so its text still holds.
 
 ## 12. Cold-eyes loop log
 
@@ -300,5 +323,6 @@ metadata file once to reconcile.
 ## 14. Migration / compatibility
 
 A vault written by DEED-0002's code has no `index`, `index.prev` or
-`lock`. Step 4 finds no index and rebuilds from its metadata files, and
-step 1 creates `lock`, so those vaults open unchanged.
+`lock`. Step 4 finds no index and rebuilds from its metadata files, step 6
+saves the rebuilt index, and step 1 creates `lock`, so those vaults open
+and are upgraded on first open.
