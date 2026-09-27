@@ -2,7 +2,7 @@
 
 ## Where this project is
 
-**State:** 3 — Unqueued. Design agreed (`docs/design.md`); roadmap not yet broken out.
+**State:** 4 — Between items. Roadmap queued (`ROADMAP.md`, 0.1.0).
 **In flight:** nothing.
 
 > Keep the two lines above true, and keep them to two lines. They are
