@@ -46,8 +46,8 @@ The rules, strongest first. A test can check each by reading imports.
    systems in plain automated tests.
 2. **Only `crypto` imports the encryption library and interprets its
    settings.** `crypto` hands `vault` a key-derivation record — the
-   Argon2id settings and salt as one byte string — and `vault` stores it
-   in the header without reading it.
+   Argon2id settings, salt and wrapped vault key as one byte string —
+   and `vault` stores it in the header without reading it.
 3. **Only `vault` calls `crypto`**, and only `vault` reads or writes files
    inside the vault folder. Every other part gets documents and the index
    through the `Vault` object in `vault/vault.py`.

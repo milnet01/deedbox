@@ -26,21 +26,32 @@ installing each and inspecting it:
 
 ## Decision
 
-Use PyNaCl for all encryption. Argon2id derives the key. Secretstream
-encrypts each document file. Libsodium's single-message authenticated
-encryption protects the index. Only `src/deedbox/crypto.py` imports it.
+Use PyNaCl for all encryption. Only `src/deedbox/crypto.py` imports it.
 
-The Argon2id cost settings are chosen and written into the vault header
-in build step 1, so they can be raised later without breaking old vaults.
+- **Keys.** Argon2id turns the password into a key that wraps a random
+  vault key. The vault key encrypts everything else. The Argon2id
+  settings, the salt and the wrapped vault key form the header record
+  that `vault` stores without reading (`docs/design.md`, rule 2). The
+  settings are chosen in build step 1 (`docs/brief.md`, Build order).
+- **Document content.** Secretstream encrypts each document's content
+  file. The reader must reject a stream whose last piece is not tagged
+  final: secretstream does not flag a cut-off file by itself. Checked
+  2026-09-27 — with the final piece dropped, the first piece still
+  decrypted with no error.
+- **Everything small.** XChaCha20-Poly1305 single-message encryption
+  (`crypto_aead_xchacha20poly1305_ietf`) protects the index and each
+  metadata file.
 
 ## Consequences
 
 - Rolodex uses `cryptography` with PBKDF2, so the two apps do not share
   crypto code. Whether Rolodex should follow is its own question.
+- Changing the password, or raising the Argon2id settings, rewraps the
+  vault key and rewrites only the header. No document is re-encrypted.
 - PyNaCl releases less often than `cryptography`. It is a thin wrapper;
   libsodium underneath does the work. If PyNaCl stops being maintained,
-  the replacement must still read the same secretstream format, which
-  any libsodium binding can.
+  the replacement must still read the same secretstream and
+  XChaCha20-Poly1305 formats, which any libsodium binding can.
 - libsodium is a compiled library, so every installer must ship it.
   PyNaCl's prebuilt packages include it on all three systems.
 - The independent security review before the first public release
