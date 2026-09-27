@@ -2,7 +2,7 @@
 
 ## Where this project is
 
-**State:** 2 — Unshaped. Discovery agreed (`docs/discovery.md`); design not started.
+**State:** 3 — Unqueued. Design agreed (`docs/design.md`); roadmap not yet broken out.
 **In flight:** nothing.
 
 > Keep the two lines above true, and keep them to two lines. They are
@@ -35,7 +35,8 @@ rather than in a standard.
 
 ### Stack
 
-(Decided in design — `docs/design.md`. Until then, undecided.)
+Python 3.12+, PySide6 (Qt), PyNaCl. `docs/design.md` § The stack owns
+the full list and what it rules out.
 
 ### Build and test
 

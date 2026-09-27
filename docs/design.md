@@ -8,8 +8,8 @@ agreed — `~/.claude/workflow.md` § 2. It passes when someone can take any
 item off the queue and say which part it belongs in and what it may
 touch.
 
-**Status:** reviewed 2026-09-27 (`review-contract`, three loops, capped)
-— waiting for the owner's agreement. Built from `docs/discovery.md`;
+**Status:** agreed by the owner, 2026-09-27, after `review-contract`
+(three loops, capped). Built from `docs/discovery.md`;
 its sign labels (S1–S10) are cited below.
 
 ## The parts
@@ -157,7 +157,7 @@ app ─► ui ─► vault ─► crypto
 - **No hiding of sizes and times.** Anyone holding the vault folder can see
   roughly how many documents it holds, how large each is, and when each
   was last written. S5's opaque dates are the documents' own dates, which
-  live only inside encrypted files.
+  live only inside encrypted files. Accepted by the owner 2026-09-27.
 - **A large installer.** Python plus Qt makes a bigger download than a
   C++ app.
 - **Formats Qt cannot show.** v1 shows PDFs and common image types only;
