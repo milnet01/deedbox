@@ -8,7 +8,7 @@ agreed — `~/.claude/workflow.md` § 2. It passes when someone can take any
 item off the queue and say which part it belongs in and what it may
 touch.
 
-**Status:** agreed by the owner, 2026-09-27, after `review-contract`
+**Status:** agreed by the owner, 2026-09-27, after `review-contract`; amended 2026-09-27 (packaging part, rules 10–11), re-review owed —
 (three loops, capped). Built from `docs/discovery.md`;
 its sign labels (S1–S10) are cited below.
 
@@ -31,6 +31,7 @@ All code lives in the Python package `src/deedbox/`. Tests mirror it under
 | **errors** | The shared error types every part raises. | `src/deedbox/errors.py` |
 | **ui** | Every window, dialog and the in-window document viewer, and the worker threads for extraction. Runs the expiry check when the main window opens. | `src/deedbox/ui/` — one file per window or dialog |
 | **app** | Start-up: builds the Qt application and opens the first window. | `src/deedbox/__main__.py` |
+| **packaging** | Building the installers: PyInstaller for Windows and macOS, the Flatpak for Linux, each bundling Tesseract (S1). Imports nothing from Deedbox; it packages the tree. | `packaging/` |
 
 **`vault` in the rules below means the whole `src/deedbox/vault/`
 package** — vault, index and migrate. They share the atomic-write helper
@@ -68,6 +69,12 @@ The rules, strongest first. A test can check each by reading imports.
    `export`. **It may not call** `crypto`, and it may not build a path
    inside the vault folder.
 9. **Nothing depends on `ui` or `app`.** Every part may import `errors`.
+10. **`app` may call only `ui`**, and **`export` may call only `vault`**
+    (besides `errors`). These were arrows in the diagram below; the
+    diagram renders the rules and does not add to them.
+11. **`packaging` is not imported by anything and imports nothing from
+    `src/deedbox/`.** It builds installers from the tree and the
+    dependency lock; no Deedbox code may assume it runs installed.
 
 ```
 app ─► ui ─► vault ─► crypto
