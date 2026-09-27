@@ -40,7 +40,9 @@ the full list and what it rules out.
 
 ### Build and test
 
-(Filled once the stack exists.)
+- The whole gate, as CI runs it: `./scripts/local-ci.sh` (needs `uv`).
+- Tests alone: `uv run --locked --group dev pytest -q`.
+- Dependencies are pinned in `pyproject.toml` and locked in `uv.lock`.
 
 ### Roadmap IDs
 

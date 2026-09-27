@@ -70,7 +70,7 @@ run() { uv run --locked --group dev "$@"; }
 
 step 'lint'
 run ruff check .
-run ruff format --check .
+run ruff format --check src tests  # not docs: spec samples are illustrations
 
 step 'test'
 run pytest -q
