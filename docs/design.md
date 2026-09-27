@@ -111,8 +111,8 @@ app ─► ui ─► vault ─► crypto
   category, tags, note, dates, original filename, file type, extracted
   text and extraction status (not yet run, done, or no OCR tool).
   Editing metadata rewrites only the small file and the index.
-  Rebuilding the index reads the metadata files alone; nothing is re-extracted. No title, date,
-  category or original filename appears in any name (S5).
+  Rebuilding the index reads the metadata files alone; nothing is
+  re-extracted. No title, date, category or original filename appears in any name (S5).
 - **Format version.** The vault header and every file in the vault
   carry a format number from the first release. Opening a vault runs
   `migrate` first. It rewrites one file at a time through
