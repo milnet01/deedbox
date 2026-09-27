@@ -19,7 +19,7 @@ All code lives in the Python package `src/deedbox/`. Tests mirror it under
 
 | Part | Responsible for | Files |
 |---|---|---|
-| **crypto** | Turning a password into a key; encrypting and decrypting small blobs and large streams. The only code that touches the encryption library. | `src/deedbox/crypto.py` |
+| **crypto** | Turning a password into a key; encrypting document content as a stream (secretstream) and the index and metadata files as single messages. The only code that touches the encryption library. | `src/deedbox/crypto.py` |
 | **vault** | The vault on disk: its folder layout, format version and header, the encrypted document files, and the one atomic-write helper. Opening, closing, adding, reading, removing. | `src/deedbox/vault/layout.py`, `vault/documents.py`, `vault/atomic.py`, `vault/vault.py` |
 | **index** | The encrypted catalogue: each document's metadata and extracted text, saving it safely with the previous copy kept, and rebuilding it from the documents' metadata files. | `src/deedbox/vault/index.py`, `vault/rebuild.py` |
 | **migrate** | Upgrading a vault written by an older release to the current format (S9). | `src/deedbox/vault/migrate.py` |
@@ -66,7 +66,7 @@ The rules, strongest first. A test can check each by reading imports.
 8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract` and
    `export`. **It may not call** `crypto`, and it may not build a path
    inside the vault folder.
-9. **Nothing depends on `ui` or `app`.**
+9. **Nothing depends on `ui` or `app`.** Every part may import `errors`.
 
 ```
 app ─► ui ─► vault ─► crypto
@@ -91,12 +91,18 @@ app ─► ui ─► vault ─► crypto
   the old one in one step (S8). The index keeps its previous copy. The
   recipe is tested on Windows, macOS and Linux, because replacing a file
   behaves differently on Windows.
+- **Which copy wins.** The index is the truth; each metadata file is its
+  document's recovery copy, carrying an edit counter the index also
+  records. Adding writes content, then index, then metadata file; editing
+  writes index, then metadata file. On open, a metadata file missing or
+  behind the index is rewritten from it, and a content file the index
+  does not list is an unfinished add and is removed.
 - **Names on disk.** Each document is two encrypted files sharing one
   random id: its content, and a small metadata file holding its title,
-  category, tags, note and dates. Editing metadata rewrites only the small
-  file and the index. Rebuilding the index reads the metadata files and
-  re-extracts the text. No title, date, category or original filename
-  appears in any name (S5).
+  category, tags, note, dates and extracted text. Editing metadata
+  rewrites only the small file and the index. Rebuilding the index reads
+  the metadata files alone; nothing is re-extracted. No title, date,
+  category or original filename appears in any name (S5).
 - **Format version.** The vault header and every file in the vault
   carry a format number from the first release. Opening a vault runs
   `migrate` first. It rewrites one file at a time through
@@ -122,7 +128,7 @@ app ─► ui ─► vault ─► crypto
 | **PyNaCl** (libsodium) | Argon2id key derivation and a documented recipe for encrypting large files in pieces, from one well-known library. [ADR-0001](decisions/ADR-0001-crypto-library.md) | `cryptography` |
 | **pypdf** | Reads the text already inside digital PDFs without Qt, so `extract` stays testable headless. | Qt's own PDF text extraction |
 | **pypdfium2** + **Pillow** | Render a scanned PDF page to image bytes in memory, without Qt — checked 2026-09-27 by rendering a page from bytes to PNG bytes. BSD-3-Clause / Apache-2.0, and MIT-CMU. | pypdf's embedded-image extraction |
-| **Tesseract** for OCR | The standard free OCR engine; Apache-2.0. All three installers bundle it — the Flatpak too, because a sandboxed app cannot run a copy installed on the computer. Missing → search covers typed fields only. Reading images from a pipe is confirmed at the OCR step; not checked here. | none considered |
+| **Tesseract** for OCR | The standard free OCR engine; Apache-2.0. All three installers bundle it — the Flatpak too, because a sandboxed app cannot run a copy installed on the computer. Missing → search covers typed fields only. Reading images from a pipe is confirmed at the OCR step, before OCR is built; not checked here. If it needs a temporary file, OCR goes back to design rather than breaking rule 4. | none considered |
 | **pytest** + **ruff** | The Python standard's tooling. | — |
 | **PyInstaller** for Windows and macOS, **Flatpak** for Linux | Rolodex already builds with PyInstaller on all three systems; Flathub is Linux's app store. | Briefcase |
 | **GitHub Actions** on Windows, macOS and Linux | Every push runs the tests on all three. | — |
@@ -158,3 +164,4 @@ app ─► ui ─► vault ─► crypto
 | Loop | Date | Lanes | Q1 | Q2 | Q3 | Q4 | Outcome |
 |------|------|-------|----|----|----|----|---------|
 | 1 | 2026-09-27 | 2 (`review-lane`; every lane held every question) | 0 | 4 | 6 | — | Verified 10 / fixed 10 / dismissed 1. Both lanes found 6 of the 10; two came from resolving lanes' open questions (log location, visible file sizes and times). Dismissed: "Python 3.12 shared with Rolodex" — names the shared language, changes nothing built. Unrunnable region declared: Windows and macOS behaviour. |
+| 2 | 2026-09-27 | 2 (`review-lane`; every lane held every question) | 0 | 2 | 3 | — | Verified 5 / fixed 5 / dismissed 3. Both lanes found the rebuild-needs-extract contradiction (merged). Two came from open questions (the Tesseract-pipe fallback; which encryption the metadata files use). 4 of 5 landed on loop-1 text. Dismissed: the workflow § 2 citation (correct, § 2 is the gates); Python version shared with Rolodex; no Python upper bound (PySide6's own requirement enforces it). |
