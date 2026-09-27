@@ -74,6 +74,9 @@ without reading it (`docs/design.md`, rule 2).
 }
 ```
 
+Every base64 value in the header and the key record uses the standard
+alphabet with padding (RFC 4648 § 4).
+
 The key record, as `crypto` produces it, is UTF-8 JSON:
 
 ```json
@@ -118,14 +121,18 @@ format  2 bytes   unsigned, big-endian; 1 for everything this spec defines
 prefix            6 bytes
 stream header    24 bytes   crypto_secretstream_xchacha20poly1305 header
 pieces           each 65536 plaintext bytes → 65553 ciphertext bytes;
-                 the last piece is shorter, tagged TAG_FINAL, and may be
-                 empty when the plaintext length is a multiple of 65536
+                 the last piece is always shorter than 65536 plaintext
+                 bytes and tagged TAG_FINAL; it is empty when the length
+                 is a multiple of 65536, zero included
 ```
 
 Every piece is pushed with the file's associated data (§4.4). A reader
 rejects the file unless the last piece it reads is tagged `TAG_FINAL`,
 no piece before it is, and the file ends exactly there. Secretstream
 does not flag a cut-off file by itself (ADR-0001); this check is ours.
+
+A reader checks the prefix before decrypting: the wrong magic raises
+`VaultCorrupt`, and a format number above 1 raises `VaultTooNew`.
 
 **Metadata (`<id>.m`) and index (`index`)** — one sealed message:
 
@@ -142,11 +149,14 @@ b"deedbox\x00" + role + b"\x00" + str(format) + b"\x00" + doc_id
 ```
 
 `role` is ASCII `content`, `metadata`, `index` or `key`. `format` is the
-file's format number in ASCII decimal. `doc_id` is the document's hex id
-for `content` and `metadata`, and empty for `index` and `key`. No field
-can contain a NUL byte, so the encoding is unambiguous. A file moved to
-another id, given another role, or relabelled with another format number
-fails to decrypt (ADR-0001, Binding).
+file's format number in ASCII decimal; for `key` it is the key record's
+own version, `1`, fixed inside `crypto` and independent of the header's
+`format`, so a header bump never breaks the unwrap. `doc_id` is the
+document's hex id for `content` and `metadata`, and empty for `index`
+and `key`. No field can contain a NUL byte, so the encoding is
+unambiguous. A file moved to another id, given another role, or
+relabelled with another format number fails to decrypt (ADR-0001,
+Binding).
 
 ### 4.5 Metadata written by this item
 
@@ -175,6 +185,7 @@ class NotAVault(DeedboxError): ...      # no vault.deedbox in the folder
 class VaultExists(DeedboxError): ...    # create() on a non-empty folder
 class WrongPassword(DeedboxError): ...  # the key record will not unwrap
 class VaultCorrupt(DeedboxError): ...   # any other decrypt or parse failure
+class NotEnoughMemory(DeedboxError): ... # Argon2id could not allocate
 class VaultTooNew(DeedboxError): ...    # a format number above what we read
 class DocumentMissing(DeedboxError): ...
 ```
@@ -192,15 +203,21 @@ def encrypt_stream(key: bytes, src: BinaryIO, dst: BinaryIO, ad: bytes) -> None:
 def decrypt_stream(key: bytes, src: BinaryIO, dst: BinaryIO, ad: bytes) -> None:
 ```
 
-`crypto` raises `WrongPassword` from `unlock` and `VaultCorrupt` from
-everything else; it never lets `nacl`'s own exceptions out.
+`unlock` raises `WrongPassword` only when the wrapped key fails to
+authenticate, and `VaultCorrupt` when the record will not parse. A failed
+Argon2id derivation raises `nacl.exceptions.RuntimeError` (checked
+2026-09-27 by capping the process's memory below the derivation's), and
+`crypto` turns it into `NotEnoughMemory` — never `WrongPassword`. Every
+other failure is `VaultCorrupt`; no `nacl` exception leaves `crypto`.
 
 `src/deedbox/vault/vault.py` — the `Vault` object other parts use:
 
 ```python
 class Vault:
     @classmethod
-    def create(cls, folder: Path, password: str) -> "Vault": ...
+    def create(cls, folder: Path, password: str, *,
+               opslimit: int | None = None,
+               memlimit: int | None = None) -> "Vault": ...
     @classmethod
     def open(cls, folder: Path, password: str) -> "Vault": ...
     def add(self, source: Path, mime_type: str) -> str: ...  # the new id
@@ -211,18 +228,22 @@ class Vault:
 
 `src/deedbox/vault/layout.py` owns the paths and the file prefixes;
 `vault/documents.py` owns reading and writing `<id>.c` and `<id>.m`;
-`vault/atomic.py` owns write-new, flush, replace (`os.replace`). DEED-0003
-hardens and tests `atomic.py` on all three systems; this item only uses it.
+`vault/atomic.py` owns write-new, flush, replace (`os.replace`). It
+writes `<target>.tmp` in the target's own directory, so the replace never
+crosses a file system. A leftover `*.tmp` is an interrupted write;
+DEED-0003's recovery deletes it. DEED-0003 hardens and tests `atomic.py`
+on all three systems; this item only uses it.
 
-`create` and `open` take the Argon2id settings only through
-`new_key_record`'s keyword arguments, which tests use to keep derivation
-fast. No other caller passes them.
+`create` passes `opslimit` and `memlimit` to `new_key_record`; only
+tests pass them, to keep derivation fast. `open` takes none — it reads
+the settings from the record (§4.2).
 
 ### 4.7 Adding and reading
 
 - `add` streams the source file through `encrypt_stream` into
   `objects/<id>.c`, then seals and writes `objects/<id>.m`, each through
-  `atomic.py`. No decrypted byte is written anywhere.
+  `atomic.py`. If writing the `.m` fails, `add` deletes the `.c` before
+  re-raising. No decrypted byte is written anywhere.
 - `read` decrypts `<id>.c` into memory and returns it. A missing file
   raises `DocumentMissing`; any failed piece, missing final tag or
   trailing byte raises `VaultCorrupt`, never a shortened result.
@@ -272,9 +293,12 @@ Each names the rule its fixture isolates.
 - **INV-5** — A file moved to another document's id, or given another
   role, fails with `VaultCorrupt`.
   *Test:* `tests/test_vault.py::test_binding` — swap the `.c` files of
-  two documents; copy a `.m` over a `.c` of the same id. Both files are
-  valid ciphertext under the right key, so only the associated data can
-  reject them.
+  two documents: same magic, same format, valid ciphertext under the right
+  key, so only the id in the associated data can reject them.
+  `tests/test_crypto.py::test_role_binding` — `seal` under the `metadata`
+  associated data and `unseal` under the `index` associated data, same
+  id and format. A role swap between whole files is rejected by the
+  magic first, so the role is tested where nothing else can reject it.
   *Breaks when:* the associated data omits the id or the role.
 
 - **INV-6** — A password entered in decomposed form (NFD) opens a vault
@@ -291,9 +315,11 @@ Each names the rule its fixture isolates.
   that the stored value, not a constant, reaches the derivation).
   *Breaks when:* `unlock` derives with constants.
 
-- **INV-8** — A header whose `format` is above 1 raises `VaultTooNew`
-  and changes nothing on disk.
-  *Test:* `tests/test_vault.py::test_too_new`.
+- **INV-8** — A header, or any encrypted file, whose format number is
+  above 1 raises `VaultTooNew` and changes nothing on disk.
+  *Test:* `tests/test_vault.py::test_too_new` — a header with `format`
+  2, and a `.c` whose prefix format is 2 (its ciphertext is otherwise
+  valid, so only the prefix check can reject it).
   *Breaks when:* a newer vault is opened, guessed at, or rewritten.
 
 - **INV-9** — Only `crypto` imports `nacl` (`docs/design.md`, rule 2),
@@ -319,11 +345,11 @@ from surfacing as an unhandled library exception.
 - **A damaged, cut-off or swapped document file** → `VaultCorrupt` for
   that document only; other documents still read.
 - **Disk full or permission denied while adding** → the `OSError`
-  propagates; the half-written temporary file is removed and no
-  metadata file is written, so no document half-exists. Recovery of an
-  interrupted add across a crash is DEED-0003's.
-- **Argon2id cannot allocate 256 MiB** → `MemoryError` from libsodium
-  propagates on create or open. Not handled in this item; noted under §15.
+  propagates; the half-written temporary file is removed, and a `.c`
+  whose `.m` failed is deleted, so no document half-exists. Recovery of
+  an add interrupted by a crash is DEED-0003's.
+- **Argon2id cannot allocate 256 MiB** → `NotEnoughMemory` on create or
+  open, never `WrongPassword`.
 
 ## 7. Tests
 
@@ -333,14 +359,14 @@ from surfacing as an unhandled library exception.
 | `tests/test_vault.py::test_wrong_password` | INV-2 |
 | `tests/test_vault.py::test_nothing_readable` | INV-3 |
 | `tests/test_vault.py::test_truncation` | INV-4 |
-| `tests/test_vault.py::test_binding` | INV-5 |
+| `tests/test_vault.py::test_binding` | INV-5 (id) |
+| `tests/test_crypto.py::test_role_binding` | INV-5 (role) |
 | `tests/test_crypto.py::test_password_normalisation` | INV-6 |
 | `tests/test_crypto.py::test_settings_come_from_record` | INV-7 |
 | `tests/test_vault.py::test_too_new` | INV-8 |
 | `tests/test_dependency_rules.py` | INV-9 |
 
-All tests use `OPSLIMIT_MIN`/`MEMLIMIT_MIN` except INV-7's, which also
-checks the stored value is honoured. Each must be seen failing once
+All tests use `OPSLIMIT_MIN`/`MEMLIMIT_MIN`. Each must be seen failing once
 against a deliberately broken implementation before it counts. CI runs
 them on Windows, macOS and Linux.
 
@@ -369,8 +395,6 @@ them on Windows, macOS and Linux.
   DEED-0004.
 - Changing the password or raising the Argon2id settings on an existing
   vault — deferred; not yet queued.
-- Handling a machine that cannot spare 256 MiB for Argon2id — deferred;
-  not yet queued.
 
 ## 10. What checks this
 
@@ -380,7 +404,7 @@ them on Windows, macOS and Linux.
 | INV-2 | `tests/test_vault.py::test_wrong_password` |
 | INV-3 | `tests/test_vault.py::test_nothing_readable` |
 | INV-4 | `tests/test_vault.py::test_truncation` |
-| INV-5 | `tests/test_vault.py::test_binding` |
+| INV-5 | `tests/test_vault.py::test_binding`, `tests/test_crypto.py::test_role_binding` |
 | INV-6 | `tests/test_crypto.py::test_password_normalisation` |
 | INV-7 | `tests/test_crypto.py::test_settings_come_from_record` |
 | INV-8 | `tests/test_vault.py::test_too_new` |
@@ -406,9 +430,3 @@ Rows live in `../reviews/DEED-0002-vault-format-loop-log.md`.
   document in memory, as the in-window viewer needs it there anyway.
 - New dependency: `PyNaCl` 1.6.2 (ADR-0001), pinned in
   `pyproject.toml`.
-
-## 14. Open questions
-
-- What a user on a low-memory machine sees if Argon2id cannot allocate.
-  Deferred (§9); the first report from the owner's week of use (DEED-0011)
-  will say whether it matters.
