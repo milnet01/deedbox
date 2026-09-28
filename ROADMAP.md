@@ -299,6 +299,11 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   the portal only watches while a monitor is open (measured in
   org.freedesktop.portal.Flatpak.xml) — so say what the "Check for
   updates" menu item does there.
+  For the spec (design review of DEED-0035, 2026-09-28): the design's
+  update row opens "On Windows and macOS", yet `ui` needs `update`'s
+  install detection on Linux too, to know it is a Flatpak. Say the
+  detection half runs on all three systems and only fetch/install is
+  Windows and macOS.
   **Layman:** Deedbox can fetch and install its own new versions, but only if you switch that on.
   Kind: feature.
   Source: user-request-2026-09-28.
@@ -326,6 +331,10 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   as an open question; neither could see `stale_content`. Read it, then
   either add the case to the design or confirm an existing line covers
   it. Pre-existing, outside the DEED-0024 gate, filed at its cap.
+  Also from the 2026-09-28 DEED-0035 design review: Vault.open runs
+  index.check_prefixes before the lock and index.delete_leftovers before
+  loading the index; § Opening, in order names neither. Settle together
+  with the stale-content case.
   **Layman:** Makes sure the design lists every way a stored document can be flagged as damaged.
   Kind: doc-fix.
   Source: review-contract design.md loop 7, 2026-09-28.
