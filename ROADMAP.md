@@ -364,6 +364,11 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   text PDFs are extracted by pypdf without Tesseract. Should read:
   scanned documents are searchable by typed fields only.
   Blocks DEED-0009, which builds extraction.
+  Also from loop 10 (2026-09-28): no part is given the job of finding
+  the bundled Tesseract. `packaging` puts it somewhere and `extract` must
+  find it there, while rule 11 forbids code assuming it runs installed.
+  Name the lookup contract (for example: packaging puts it on PATH;
+  extract looks only on PATH).
   **Layman:** Settles what Deedbox records when it cannot read the text in a document, before the reading code is built.
   Kind: doc-fix.
   Source: review-contract design.md loop 9, 2026-09-28.

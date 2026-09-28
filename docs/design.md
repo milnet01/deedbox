@@ -74,7 +74,9 @@ by reading imports; a condition a rule attaches needs a behaviour test.
    while updates are on; the service has no one-off check. No check
    sends anything about the user's documents. No other file
    imports a network library (discovery: documents never leave the
-   machine).
+   machine). This grant is per file, not per part; the dependency test
+   gains `update` and its exceptions in the change that builds it
+   (DEED-0024).
 8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract`,
    `export` and `update`. **It may not call** `crypto`, and it may not build a path
    inside the vault folder.
@@ -116,7 +118,8 @@ app ─► ui ─► vault ─► crypto
 - **Categories.** A built-in category is stored as a fixed key that `ui`
   shows translated; one the user added is stored as typed. The metadata
   records which of the two it is, so a user's category spelt like a key
-  stays the user's. `suggest` returns a key or the user's own text,
+  stays the user's. `suggest` defines the built-in keys and `ui` imports
+  them for its labels. `suggest` returns a key or the user's own text,
   never a translated name.
 - **State.** An open vault is one `Vault` object. The key exists only in
   that object's memory while the vault is open, and is dropped on close.
