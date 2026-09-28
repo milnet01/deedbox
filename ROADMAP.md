@@ -331,6 +331,17 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Source: review-contract design.md loop 7, 2026-09-28.
   Lanes: design, vault.
 
+- 📋 [DEED-0035] **Translation-ready from the first window.**
+  Owner's decision (2026-09-28): all user-facing text goes through
+  Qt's translation mechanism and every window lays out correctly
+  mirrored for right-to-left, from the first window. The translations
+  themselves are DEED-0027 (0.3.0). Needs a design rule, gated before
+  DEED-0005's windows are built.
+  **Layman:** Every piece of on-screen text can be translated, and windows work right-to-left, so languages can be added later without rebuilding the windows.
+  Kind: feature.
+  Source: user-request-2026-09-28.
+  Lanes: ui, design.
+
 ## 0.2.0
 
 The release after 0.1.0. Its items were moved here from "Later" by the owner on 2026-09-28.
@@ -379,6 +390,11 @@ The release after 0.1.0. Its items were moved here from "Later" by the owner on 
   Source: brief-2026-09-27.
   Lanes: ui, vault.
 
+## 0.3.0
+
+Everyone can use it: languages, accessibility and themes. Set by the owner on
+2026-09-28.
+
 - 📋 [DEED-0027] **Translations: Afrikaans, right-to-left languages, and common European languages with their American variants.**
   Owner's list (2026-09-28): Afrikaans; right-to-left languages;
   common European languages, including their variants in the Americas
@@ -402,3 +418,49 @@ The release after 0.1.0. Its items were moved here from "Later" by the owner on 
   Kind: accessibility.
   Source: user-request-2026-09-28.
   Lanes: ui.
+
+## 1.0.0
+
+The promise: safe to trust with your passports for years. Set by the owner on
+2026-09-28.
+
+- 📋 [DEED-0030] **Freeze the vault format as a written commitment.**
+  State that format 1.0 is supported by every later release, and
+  how a future format change is handled (migrate, never refuse).
+  Builds on S9 and docs/specs/DEED-0004-format-migration.md.
+  **Layman:** A written promise that every future Deedbox opens a vault made with 1.0.
+  Kind: doc.
+  Source: user-request-2026-09-28.
+  Lanes: vault, docs.
+
+- 📋 [DEED-0031] **Every finding from the outside security audit fixed.**
+  Closes what DEED-0012's audit reports. Blocked-by: DEED-0012
+  **Layman:** Anything the outside security check finds gets fixed before 1.0.
+  Kind: security.
+  Source: user-request-2026-09-28.
+  Lanes: crypto, vault.
+
+- 📋 [DEED-0032] **Tested by non-technical people on all three systems.**
+  Beyond the owner's week (DEED-0011): strangers on each system,
+  against S1, S2 and S3. What trips them up is filed and fixed.
+  **Layman:** People who have never seen Deedbox install and use it on Windows, macOS and Linux, and we fix what trips them up.
+  Kind: test.
+  Source: user-request-2026-09-28.
+  Lanes: ui, packaging.
+
+- 📋 [DEED-0033] **A support policy: which versions get security fixes, and for how long.**
+  Replaces SECURITY.md's "Nothing has been released" under
+  § Supported versions.
+  **Layman:** Says clearly which versions still get security fixes.
+  Kind: doc.
+  Source: user-request-2026-09-28.
+  Lanes: docs.
+
+- 📋 [DEED-0034] **Stays quick with thousands of documents.**
+  No success sign covers vault size yet. Set a size and a bar
+  (for example, opening and searching a vault of several thousand
+  documents on a modest laptop), measure it, and fix what misses.
+  **Layman:** Years of paperwork in one vault still opens and searches quickly.
+  Kind: perf.
+  Source: user-request-2026-09-28.
+  Lanes: vault, search, ui.
