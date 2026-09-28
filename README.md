@@ -25,6 +25,9 @@ Not yet installable.
 | [docs/specs/](docs/specs/) | The contract for one feature, where one was needed |
 | [SECURITY.md](SECURITY.md) | How to report a security problem |
 
+Paths starting `~/.claude/` point at the author's own workflow standards.
+They live on the author's machine and are not published; you can skip them.
+
 ## Developing
 
 Needs [uv](https://docs.astral.sh/uv/). `./scripts/local-ci.sh` runs
