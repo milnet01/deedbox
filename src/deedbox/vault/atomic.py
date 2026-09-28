@@ -7,7 +7,8 @@ docs/specs/DEED-0003-index-and-recovery.md § 4.4.
 from __future__ import annotations
 
 import os
-from collections.abc import Iterator
+import time
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import BinaryIO
@@ -16,6 +17,11 @@ try:
     import fcntl
 except ImportError:  # Windows
     fcntl = None
+
+# How long Windows may keep refusing a replace or delete because another
+# handle has the file open: a refused second opener, a virus scanner or an
+# indexer, each holding it for a moment (DEED-0003 § 4.4).
+IN_USE_WAIT = 2.0
 
 
 def write_bytes(target: Path, data: bytes) -> None:
@@ -36,7 +42,7 @@ def write_stream(target: Path) -> Iterator[BinaryIO]:
             yield out
             out.flush()
             _flush_file(out.fileno())
-        tmp.replace(target)
+        _while_in_use(lambda: tmp.replace(target))
     except BaseException:
         tmp.unlink(missing_ok=True)
         raise
@@ -45,8 +51,22 @@ def write_stream(target: Path) -> Iterator[BinaryIO]:
 
 def delete(path: Path) -> None:
     """Remove `path` so that the removal survives a power cut."""
-    path.unlink(missing_ok=True)
+    _while_in_use(lambda: path.unlink(missing_ok=True))
     _flush_directory(path.parent)
+
+
+def _while_in_use(operation: Callable[[], object]) -> None:
+    # Windows refuses to replace or delete a file another handle has open.
+    # Elsewhere a PermissionError is a real refusal and is raised at once.
+    deadline = time.monotonic() + IN_USE_WAIT
+    while True:
+        try:
+            operation()
+            return
+        except PermissionError:
+            if os.name != "nt" or time.monotonic() > deadline:
+                raise
+            time.sleep(0.05)
 
 
 def _flush_file(fd: int) -> None:

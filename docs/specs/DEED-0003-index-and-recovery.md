@@ -88,7 +88,11 @@ removed file stays removed after a power cut. Windows has no directory
 handle to flush, and `os.replace` there is implemented as `MoveFileExW`
 with `MOVEFILE_REPLACE_EXISTING` (CPython 3.13 `Modules/posixmodule.c`,
 checked 2026-09-27); its behaviour is exercised by CI on Windows, not
-asserted here.
+asserted here. Windows refuses to replace or delete a file another handle
+has open — a refused second opener's step 0, a virus scanner, an indexer.
+So on Windows the replace and `delete` retry a `PermissionError` for up
+to `atomic.IN_USE_WAIT` seconds, then raise it; elsewhere they raise at
+once.
 
 ### 4.5 Write orders
 
@@ -307,10 +311,6 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
 - Reporting `damaged()` ids to the user — tracked by DEED-0005.
 - Read-only vaults, and a vault on a network share whose locks do not
   work — deferred; not yet queued.
-- On Windows, a refused second opener's step 0 reads while the holder
-  saves; if that makes the holder's replace fail, the save raises and
-  the next open recovers. Exercised by CI on Windows; deferred; not yet
-  queued.
 
 ## 10. What checks this
 
@@ -326,6 +326,7 @@ Linux; the Windows run is the first evidence for §4.4's Windows half.
 | Directory flush after replace (§4.4) | **nothing** — no test can pull the power; the call is visible in `atomic.py` only |
 | Atomic replace itself (§4.4) | **nothing** — INV-6 passes against in-place writes too (see INV-6); checked by reading `atomic.py` |
 | Windows replace behaviour | **`Partial:`** INV-6 on the Windows CI runner; not asserted locally |
+| Windows retry while a file is in use (§4.4) | **`Partial:`** `tests/test_atomic.py` on the Windows CI runner; green on Linux proves nothing |
 
 ## 11. Cross-doc impact
 
