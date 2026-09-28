@@ -41,7 +41,8 @@ package reads the index's file layout.
 
 ## What may depend on what
 
-The rules, strongest first. A test can check each by reading imports.
+The rules, strongest first. A test can check the import half of each
+by reading imports; a condition a rule attaches needs a behaviour test.
 
 1. **Only `ui` and `app` import Qt.** Everything else runs and is tested
    without a display. This keeps the vault logic checkable on all three
@@ -67,10 +68,11 @@ The rules, strongest first. A test can check each by reading imports.
    vault file and holds no thread or Qt signal. Scanned PDF pages become
    images in memory; OCR hands those image bytes to the OCR tool through
    a pipe.
-7. **Only `update/fetch.py` opens a network connection.** `ui` starts
-   an update check — through `update`, or through Flatpak's update
-   service — only after the user turned updates on or asked for one. No
-   check sends anything about the user's documents. No other file
+7. **Only `update/fetch.py` opens a network connection.** `ui` runs
+   `update`'s check only after the user turned updates on or asked for
+   one. On the Flatpak, `ui` starts the update service's watch only
+   while updates are on; the service has no one-off check. No check
+   sends anything about the user's documents. No other file
    imports a network library (discovery: documents never leave the
    machine).
 8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract`,
@@ -121,9 +123,10 @@ app ─► ui ─► vault ─► crypto
   records. Adding writes content, then index, then metadata file.
   Editing writes index, then metadata file. Removing deletes the metadata
   file, then writes the index, then deletes the content file.
-- **Opening, in order.** Take the `lock`. Run `migrate`. Load the index; if it will not
-  decrypt, load its previous copy; if neither will, rebuild from the
-  metadata files. Then reconcile against the files on disk:
+- **Opening, in order.** Read the header and check the password;
+  nothing is written before both pass. Take the `lock`. Run `migrate`.
+  Load the index; if it will not decrypt, load its previous copy; if
+  neither will, rebuild from the metadata files. Then reconcile against the files on disk:
   - a metadata file ahead of the index, or not listed in it, updates the
     index;
   - an index entry whose metadata file is behind or missing has that file
@@ -145,7 +148,7 @@ app ─► ui ─► vault ─► crypto
   in any name (S5).
 - **Format version.** The vault header and every file in the vault
   except `lock` carry a format number from the first release. Opening a
-  vault runs `migrate` first. It rewrites one file at a time through
+  vault runs `migrate` before loading the index. It rewrites one file at a time through
   `vault/atomic.py` and updates the header's number last, so an
   interrupted migration resumes on the next open. A vault or file newer
   than the app is refused with a clear message, never guessed at (S9).
@@ -155,8 +158,8 @@ app ─► ui ─► vault ─► crypto
   text, search query or the password.
 - **Settings.** Choices kept between runs, such as whether updates are
   on, live in one file in the user's app-data folder — never inside the
-  vault folder. `ui` owns them through Qt's settings store and passes
-  other parts what they need.
+  vault folder. `ui` owns them through Qt's settings store in INI
+  format and passes other parts what they need.
 - **Dates.** Calendar dates without times, stored as ISO text
   (`2026-09-27`). Compared in the user's local day.
 - **Background work.** OCR and text extraction run in worker threads

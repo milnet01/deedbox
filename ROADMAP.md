@@ -293,6 +293,12 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   starts the update service only when updates are on or the user asked
   (design rule 7); the service refuses a release that widens sandbox
   permissions (design rule 11).
+  For the spec (from the design review, 2026-09-28): name who signs
+  each release and in what format, since `update` checks a signature
+  nothing yet produces. On the Flatpak there is no one-off check —
+  the portal only watches while a monitor is open (measured in
+  org.freedesktop.portal.Flatpak.xml) — so say what the "Check for
+  updates" menu item does there.
   **Layman:** Deedbox can fetch and install its own new versions, but only if you switch that on.
   Kind: feature.
   Source: user-request-2026-09-28.
@@ -311,6 +317,19 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: doc-fix.
   Source: review-contract design.md loop 5, 2026-09-28.
   Lanes: design, search, vault.
+
+- 📋 [DEED-0026] **Design: check the damaged-document list against Vault.open's stale-content case.**
+  `Vault.open` in src/deedbox/vault/vault.py also marks as damaged
+  any document from `index.stale_content` whose content file still
+  exists after reconcile. docs/design.md § Opening, in order lists the
+  damaged cases and does not name this one. Both cold lanes raised it
+  as an open question; neither could see `stale_content`. Read it, then
+  either add the case to the design or confirm an existing line covers
+  it. Pre-existing, outside the DEED-0024 gate, filed at its cap.
+  **Layman:** Makes sure the design lists every way a stored document can be flagged as damaged.
+  Kind: doc-fix.
+  Source: review-contract design.md loop 7, 2026-09-28.
+  Lanes: design, vault.
 
 ## Later (no version yet)
 
