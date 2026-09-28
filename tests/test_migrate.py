@@ -392,3 +392,32 @@ def test_newer_kind_refused(tmp_path, monkeypatch):
         if p.is_file()
     }
     assert after == before
+
+
+def test_deleted_orphan_not_reported(tmp_path, monkeypatch):
+    """§ 4.3 with DEED-0003's reconcile: a content file left below its format
+    that reconcile then deletes, as an unfinished add, is not reported by
+    `damaged()`. Breaks when the stale ids are taken before reconcile and
+    never checked against what it deleted."""
+    folder, vault = make_vault(tmp_path)
+    key = vault._key
+    vault.close()
+
+    orphan = layout.new_id()
+    documents.write_content(
+        layout.content_path(folder, orphan), key, io.BytesIO(b"orphan"), orphan
+    )  # format 1, no metadata file, no index entry
+
+    monkeypatch.setattr(layout, "FILE_FORMAT", {**layout.FILE_FORMAT, "content": 2})
+    monkeypatch.setattr(layout, "VAULT_FORMAT", 2)
+    header_path = folder / "vault.deedbox"
+    header_path.write_text(
+        json.dumps({**json.loads(header_path.read_text()), "format": 2})
+    )
+
+    reopened = Vault.open(folder, "correct horse")
+    try:
+        assert not layout.content_path(folder, orphan).exists()
+        assert orphan not in reopened.damaged()
+    finally:
+        reopened.close()

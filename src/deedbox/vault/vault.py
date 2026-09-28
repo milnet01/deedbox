@@ -101,7 +101,13 @@ class Vault:
             cleaned = index.delete_leftovers(folder)
             entries, source = index.load(folder, key)
             entries, changed, damaged = index.reconcile(folder, key, entries)
-            damaged += [doc_id for doc_id in stale if doc_id not in damaged]
+            # Reconcile may have deleted a stale content file as an unfinished add.
+            damaged += [
+                doc_id
+                for doc_id in stale
+                if doc_id not in damaged
+                and layout.content_path(folder, doc_id).exists()
+            ]
             keep_previous = source == index.INDEX
             if source != index.INDEX or cleaned or changed:
                 index.save(folder, key, entries, keep_previous=keep_previous)
