@@ -93,6 +93,11 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: implement.
   Lanes: ui, app.
   Source: design-2026-09-27.
+  Decided (2026-09-28, owner): Create stays disabled until the owner ticks
+  "I understand my documents cannot be recovered without this password"
+  (S2). A new password needs 12+ characters, typed twice, no other rules.
+  A new vault defaults to a Deedbox-named folder in Documents, and any
+  folder can be chosen.
 
 - 📋 [DEED-0006] **Filing: category, tags, dates, note, with suggestions.**
   Editing a document's metadata, and `suggest` proposing a title,
@@ -205,7 +210,7 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   SECURITY.md names it. The first three-OS CI run is GitHub Actions run
   36312128466; its result had not been seen when this was written.
 
-- 📋 [DEED-0016] **Trademark check on the name Deedbox.**
+- ✅ [DEED-0016] **Trademark check on the name Deedbox.**
   `docs/brief.md` records only a web search. Decide before the first
   public release.
   **Layman:** Makes sure nobody else owns the name before it goes public.
@@ -215,6 +220,17 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Decided (2026-09-28, owner): Claude searches the public
   trademark databases and app stores and writes up what it finds;
   the owner decides. Not legal advice.
+  Search done 2026-09-28 (not legal advice). No registered or pending
+  DEEDBOX mark in USPTO or TMview (EU, UK, WIPO and others). But three
+  software products took the name in 2026, none registered: deedbox.io
+  (Kontroll Solutions Ltd, UK encrypted document handover for
+  conveyancers), an iOS landlord app by Vibesoft LLC, and
+  deedbox-maintainers/deedbox-app (AGPL law-firm software with document
+  management). deedbox.com and deedbox.app are parked. "Deed box" is also
+  a common phrase for a document box. Awaiting the owner's decision.
+  Decided (2026-09-28, owner): rename before the first release. The new
+  name is the owner's pick from a screened shortlist; the rename itself
+  is DEED-0023.
 
 - ✅ [DEED-0022] **The local gate's documentation step checks something.**
   `scripts/local-ci.sh`'s `documentation` step holds only the template's
@@ -228,6 +244,19 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Shipped 2026-09-28: scripts/check_docs.py checks every relative link
   in the tracked Markdown files resolves, in both gate modes. Anchors
   are not checked, only files. tests/test_check_docs.py locks it.
+
+- 📋 [DEED-0023] **Rename the app before the first release.**
+  The owner chose to rename (DEED-0016's search, 2026-09-28). Covers the
+  product name in text, the Python package, the repository and the
+  default vault folder name. The on-disk markers inside vault files
+  (`DBX*` prefixes, the associated-data label) stay as they are: users
+  never see them, and changing them would break the frozen format-1
+  sample vault.
+  Blocked-by: DEED-0016
+  **Layman:** Gives the app a name nobody else's software is already using.
+  Kind: chore.
+  Lanes: repo.
+  Source: owner-decision-2026-09-28.
 
 ## Later (no version yet)
 
