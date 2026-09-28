@@ -14,6 +14,14 @@ name: ci
 on:
   push:
     branches: [main]
+    # local-gate.md § 9. A push touching only documentation skips this run;
+    # the pre-push hook has already run the documentation checks on it. This
+    # is scripts/local-ci.sh's DOCS_GLOB (`docs/*|*.md|LICENSE`) in GitHub's
+    # syntax, and the two change together. Pull requests still run everything.
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
   pull_request:
 
 permissions:
