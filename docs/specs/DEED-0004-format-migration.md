@@ -100,7 +100,12 @@ STEPS: dict[tuple[str, int], Step] = {}
 - A step that cannot read the old file raises `VaultCorrupt`.
 - The header is kind `header`, keyed by `VAULT_FORMAT`: `STEPS[("header",
   n)]` takes the header object and returns the next one. Its `Step`
-  signature differs and is declared beside the registry.
+  signature differs and is declared beside the registry. Most bumps
+  change no header field, so a missing header step leaves the object as
+  it is.
+- A file below its kind's number with no step for its number is a
+  release that raised a number without shipping the step: `run` raises
+  `KeyError` and the open fails.
 - No step exists in this item; there is only format 1.
 
 ### 4.3 Opening, step 2
@@ -117,7 +122,8 @@ leftovers are deleted.
    the same path. Each application is its own atomic replace, so the
    file on disk is always at some whole format.
 3. A step raising `VaultCorrupt` leaves that file as it is and moves to
-   the next file. Any other exception propagates, and the open fails.
+   the next file. `run` returns the ids of the content files it left
+   behind. Any other exception propagates, and the open fails.
 4. Last, apply the header steps and write the header with `format` set
    to `VAULT_FORMAT` through `atomic.write_bytes`.
 
@@ -134,7 +140,9 @@ unreadable to the rest of the open (§ 4.1), and DEED-0003 § 4.6 handles
 it as it handles any unreadable file: an index copy is passed over for
 the other, and a metadata file is rewritten from the index where the
 index lists it, or its id goes to `damaged()` where it does not. A
-content file left behind raises `VaultCorrupt` when read.
+content file left behind cannot be recovered from anything, so
+`Vault.open` adds the ids `run` returned to `damaged()`; reading one
+raises `VaultCorrupt`.
 
 ### 4.4 The sample vault
 
@@ -154,8 +162,9 @@ It holds:
 Content bytes are generated from each filename by
 `tests/fixtures/sample_vault.py::expected_content`, so the expected
 bytes need no second copy. That module also holds the generator, which
-refuses to write into an existing folder. `MANIFEST.sha256` lists every
-fixture file's hash. The `lock` file is not checked in.
+refuses to write into an existing folder.
+`tests/fixtures/vault-format-1.sha256`, beside the folder, lists the hash
+of every file in it. The `lock` file is not checked in.
 
 The fixture is never regenerated. A later release that changes a format
 keeps this folder and adds a step.
@@ -176,7 +185,8 @@ fixture isolates.
 - **INV-2** — The sample vault's files are the bytes first checked in.
   *Test:* `tests/test_migrate.py::test_sample_vault_unchanged` — hashes
   every file under the fixture folder and compares with
-  `MANIFEST.sha256`, both ways, so an added or missing file fails too.
+  `vault-format-1.sha256`, both ways, so an added or missing file fails
+  too.
   *Breaks when:* the fixture is regenerated or edited.
 
 - **INV-3** — Opening a vault whose header is behind brings every file
@@ -184,10 +194,13 @@ fixture isolates.
   document reads as before.
   *Test:* `tests/test_migrate.py::test_migrates_to_current` — patches
   `FILE_FORMAT["index"]` and `VAULT_FORMAT` to 2 and registers an index
-  step 1→2 that re-seals under format 2, then opens a format-1 vault.
-  Afterwards `index`, `index.prev` and the header carry 2, and
-  `documents()` and every `read` match the values before. Only the
-  step can produce a format-2 index, so this isolates step 2.
+  step 1→2 that re-seals under format 2 and records each path it is
+  called with, then opens a format-1 vault. The step was called for
+  exactly `index` and `index.prev`; afterwards both and the header carry
+  2, and `documents()` and every `read` match the values before. The
+  record is what isolates step 2: skipping `index` alone still ends with
+  a format-2 `index`, because the open falls back to `index.prev` and
+  saves a fresh one.
   *Breaks when:* a file of the changed kind is skipped, or the header
   is not written.
 
@@ -201,7 +214,7 @@ fixture isolates.
 - **INV-5** — A migration cut off part-way resumes on the next open and
   ends with every document intact.
   *Test:* `tests/test_migrate.py::test_interrupted_migration_resumes` —
-  with `metadata` and `index` both raised to 2, the registered metadata
+  with `metadata`, `index` and `VAULT_FORMAT` raised to 2, the registered metadata
   step raises `OSError` on its second call. The open fails; the header
   is still 1, and each `.m` is at 1 or 2. A second open with the step
   healthy succeeds, and every document reads as before. The step
@@ -213,14 +226,15 @@ fixture isolates.
 - **INV-6** — A file a step cannot read does not stop the upgrade: the
   open succeeds, and the file is then handled as any unreadable file.
   *Test:* `tests/test_migrate.py::test_unreadable_file_survives` — with
-  `metadata` and `VAULT_FORMAT` raised to 2, one listed document's `.m`
-  has a byte flipped. A second document, whose `.c` and `.m` are written
-  directly so the index does not list it, has a byte of its `.m`
-  flipped too. The open succeeds and
-  the header is 2. The listed document's metadata file is rewritten from
-  the index at format 2 and its metadata matches the index; the
-  unlisted one's `.m` is byte-identical and its id is in `damaged()`.
-  Every other document reads.
+  `content`, `metadata` and `VAULT_FORMAT` raised to 2, three documents
+  each get one byte flipped: a listed document's `.m`; the `.m` of a
+  document whose `.c` and `.m` are written directly, so the index does
+  not list it; and a third, listed document's `.c`. The open succeeds
+  and the header is 2. The first document's metadata file is rewritten
+  from the index at format 2, its metadata matches the index, and its
+  id is not in `damaged()`. The second's `.m` is byte-identical and its
+  id is in `damaged()`. The third's id is in `damaged()` and its `read`
+  raises `VaultCorrupt`. Every other document reads.
   *Breaks when:* one bad file aborts the upgrade, or a step's failure
   deletes the file.
 
@@ -240,8 +254,8 @@ fixture isolates.
   the open fails; the header is still old, so the next open resumes.
 - **A power cut mid-upgrade** → each file is whole at one format
   (atomic replace); the next open resumes.
-- **A file a step cannot decrypt** → left in place; reported as damaged
-  (§ 4.3).
+- **A file a step cannot decrypt** → left in place, then handled as
+  § 4.3 says.
 - **A vault from a newer release** → refused before anything is written
   (DEED-0003 § 4.6 step 0, and `_read_header`).
 - **Older Deedbox opening an upgraded vault** → refused as too new. A
