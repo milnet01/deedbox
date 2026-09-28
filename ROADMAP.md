@@ -257,6 +257,15 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: chore.
   Lanes: repo.
   Source: owner-decision-2026-09-28.
+  Shortlist screened 2026-09-28 (USPTO, PyPI, GitHub, App Store,
+  Flathub, domains; EU/UK/WIPO registers NOT reached). Best first:
+  Paperkist (nothing found anywhere; .com unregistered), Keepleaf
+  (keepleaf.com is a household-goods shop), Paperwell (a dormant 2012
+  legal-templates startup used it), Sheafkeep (a Taiwanese magnet shop
+  owns the .com), Almery (near Almerys, a French health-insurance app).
+  Rejected: Scrinia, Lockleaf, Quirebox, Cofferly, Kistly. Awaiting the
+  owner's pick; then check EU/UK registers for that one name before
+  renaming.
 
 ## Later (no version yet)
 
