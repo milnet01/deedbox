@@ -268,6 +268,10 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Rejected: Scrinia, Lockleaf, Quirebox, Cofferly, Kistly. Awaiting the
   owner's pick; then check EU/UK registers for that one name before
   renaming.
+  Decided (2026-09-28, owner): Paperkist. Same day: a web search for
+  the exact word "Paperkist" found no use (nearest: Paperkast, Paper
+  Kiss). EU/UK registers still not reached: TMview's API returned an
+  empty body to curl, and the browser extension was not connected.
 
 - 📋 [DEED-0024] **Opt-in self-updater on Windows, macOS and Linux (Flatpak).**
   The one network use Deedbox has. Off until the user turns it on;
