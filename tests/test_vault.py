@@ -64,6 +64,8 @@ def test_nothing_readable(tmp_path):
     """INV-3 (S5)."""
     folder, vault = make_vault(tmp_path)
     add_bytes(vault, tmp_path, b"marker-CONTENT", name="marker-FILENAME.pdf")
+    # Closed first: Windows refuses to read the held `lock` file.
+    vault.close()
     today = datetime.date.today().isoformat().encode()
     for path, (_, data) in snapshot(folder).items():
         for secret in (b"marker-CONTENT", b"marker-FILENAME", today):

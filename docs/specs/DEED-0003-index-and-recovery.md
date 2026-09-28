@@ -231,10 +231,15 @@ fixture isolates.
   *Test:* `tests/test_recovery.py::test_kill_during_writes` — a child
   adds and updates in a loop, printing each id once `add` returns; the
   parent kills it with `SIGKILL` (Linux and macOS; `TerminateProcess` on
-  Windows) as soon as it has printed N ids, for many values of N, then
-  reopens and reads every printed id. Across the runs, at least one must
-  have left a `.tmp` file or an orphan `.c` behind, or the test fails:
-  that is the evidence a kill landed mid-write.
+  Windows) a short, varying delay after it has printed N ids, for many
+  values of N, then reopens and reads every printed id. A kill at once
+  lands just after `add` returned often enough that every run can miss
+  the writes, so the delays spread from none to a few milliseconds.
+  Across the runs, at least one must have left a `.tmp` file or an
+  orphan `.c` behind, or the test fails: that is the evidence a kill
+  landed mid-write. Runs continue past the planned set until one does,
+  up to a cap. Windows drops a killed process's lock some time after it
+  exits, so the reopen retries `VaultInUse` for a bounded time.
   *Breaks when:* the write order or a reconcile row is wrong, so a
   killed run leaves a vault that will not open or has lost a returned
   document. It does not isolate atomicity: with in-place writes the

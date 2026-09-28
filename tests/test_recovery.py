@@ -6,12 +6,13 @@ import io
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import nacl.pwhash.argon2id as argon2id
 import pytest
 
-from deedbox.errors import VaultTooNew, WrongPassword
+from deedbox.errors import VaultInUse, VaultTooNew, WrongPassword
 from deedbox.vault import Vault, documents, index, layout
 
 FAST = {"opslimit": argon2id.OPSLIMIT_MIN, "memlimit": argon2id.MEMLIMIT_MIN}
@@ -182,13 +183,36 @@ while True:
 """
 
 
+KILL_AFTER = (1, 2, 3, 4, 5, 6, 8, 10, 12, 15)
+# Seconds between the Nth id and the kill. Killing at once lands just after
+# `add` returned, before the next write starts, often enough that ten runs on
+# a fast machine can all miss; a spread of delays reaches into the writes.
+KILL_DELAY = (0, 0.0005, 0.001, 0.002, 0.004, 0.008, 0.016)
+
+
+def assert_whole_after_kill(folder: Path) -> list[str]:
+    """Windows drops a killed process's lock some time after it exits."""
+    deadline = time.monotonic() + 10
+    while True:
+        try:
+            return assert_whole(folder)
+        except VaultInUse:
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(0.05)
+
+
 def test_kill_during_writes(tmp_path):
-    """INV-6. Killed as soon as N ids are printed, for many N; at least one
-    run must leave a mid-write state, or the kills proved nothing."""
+    """INV-6. Killed shortly after N ids are printed, for many N and delays;
+    at least one run must leave a mid-write state, or the kills proved
+    nothing. Runs past the ten until one does, up to a cap."""
     folder = tmp_path / "vault"
     Vault.create(folder, "pw", **FAST).close()
     returned, caught_mid_write = [], 0
-    for n in (1, 2, 3, 4, 5, 6, 8, 10, 12, 15):
+    for run in range(60):
+        if run >= len(KILL_AFTER) and caught_mid_write:
+            break
+        n = KILL_AFTER[run % len(KILL_AFTER)]
         child = subprocess.Popen(  # noqa: S603 — our own interpreter and script
             [sys.executable, "-c", WRITER, str(folder), str(tmp_path / "src.pdf")],
             stdout=subprocess.PIPE,
@@ -196,6 +220,7 @@ def test_kill_during_writes(tmp_path):
         )
         for _ in range(n):
             returned.append(child.stdout.readline().strip())
+        time.sleep(KILL_DELAY[run % len(KILL_DELAY)])
         child.kill()
         child.wait()
         leftovers = list(folder.rglob("*.tmp"))
@@ -205,7 +230,7 @@ def test_kill_during_writes(tmp_path):
             if not c.with_suffix(".m").exists()
         ]
         caught_mid_write += bool(leftovers or orphans)
-        listed = assert_whole(folder)
+        listed = assert_whole_after_kill(folder)
         assert set(returned) <= set(listed)
     assert caught_mid_write, "no kill landed mid-write; the test proved nothing"
 
