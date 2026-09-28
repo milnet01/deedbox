@@ -70,7 +70,7 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   atomicity, which INV-6 does not isolate (spec § 10). Linux only so far;
   Windows and macOS first run with a remote (DEED-0015).
 
-- 🚧 [DEED-0004] **Format versions and the migration framework.**
+- ✅ [DEED-0004] **Format versions and the migration framework.**
   Per-file format numbers, a resumable `migrate`, refusal of a vault
   newer than the app, and a checked-in sample vault from the first
   format that every later release must open. Serves S9.
@@ -80,6 +80,9 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Lanes: vault, migrate.
   Source: design-2026-09-27.
   Spec accepted 2026-09-28: docs/specs/DEED-0004-format-migration.md.
+  Shipped 2026-09-28 (9bc3470, 13cf543): per-kind format numbers,
+  resumable upgrade on open, frozen sample vault
+  tests/fixtures/vault-format-1/. 50 tests green on Linux and Windows.
 
 - 📋 [DEED-0005] **Main window: create or unlock a vault, add, list and view documents.**
   Build step 3. Vault creation says in plain words that a forgotten
