@@ -8,8 +8,8 @@ agreed — `~/.claude/workflow.md` § 2. It passes when someone can take any
 item off the queue and say which part it belongs in and what it may
 touch.
 
-**Status:** agreed; amended with the packaging part and rules 10–11,
-re-review owed. Built from `docs/discovery.md`; its sign labels (S1–S10)
+**Status:** agreed; the packaging part and rules 10–11 reviewed
+2026-09-28. Built from `docs/discovery.md`; its sign labels (S1–S10)
 are cited below.
 
 ## The parts
@@ -20,7 +20,7 @@ All code lives in the Python package `src/deedbox/`. Tests mirror it under
 | Part | Responsible for | Files |
 |---|---|---|
 | **crypto** | Turning a password into a key; encrypting document content as a stream (secretstream) and the index and metadata files as single messages. The only code that touches the encryption library. | `src/deedbox/crypto.py` |
-| **vault** | The vault on disk: its folder layout, format version and header, the encrypted document files, and the one atomic-write helper. Opening, closing, adding, reading, removing. | `src/deedbox/vault/layout.py`, `vault/documents.py`, `vault/atomic.py`, `vault/vault.py` |
+| **vault** | The vault on disk: its folder layout, format version and header, the encrypted document files, and the one atomic-write helper. Opening, closing, adding, reading, removing. | `src/deedbox/vault/layout.py`, `vault/documents.py`, `vault/atomic.py`, `vault/lock.py`, `vault/vault.py` |
 | **index** | The encrypted catalogue: each document's metadata and extracted text, saving it safely with the previous copy kept, and rebuilding it from the documents' metadata files. | `src/deedbox/vault/index.py`, `vault/rebuild.py` |
 | **migrate** | Upgrading a vault written by an older release to the current format (S9). | `src/deedbox/vault/migrate.py` |
 | **search** | Answering a query from the loaded index (S3). | `src/deedbox/search.py` |
@@ -87,16 +87,19 @@ app ─► ui ─► vault ─► crypto
 ## What every part does the same way
 
 - **Errors.** Every expected failure is one of the types in
-  `errors.py` — wrong password, vault damaged, vault from a newer
-  release, document missing, export target not writable. `ui` turns each
-  into one plain-English message. Nothing catches an error and carries
-  on silently.
+  `errors.py`, which is the full list; a new expected failure adds a type
+  there. `ui` turns each into one plain-English message. Nothing catches
+  an error and carries on silently: documents found damaged while
+  opening are listed by `Vault.damaged()`, and `ui` shows that list when
+  the vault opens.
 - **State.** An open vault is one `Vault` object. The key exists only in
   that object's memory while the vault is open, and is dropped on close.
   Decrypted documents live in memory only while shown.
 - **Saving.** Every write into the vault folder goes through
   `vault/atomic.py`: write to a new file, flush it to disk, then replace
-  the old one in one step (S8). The index keeps its previous copy. The
+  the old one in one step (S8). The one exception is the empty `lock`
+  file, which `vault/lock.py` holds so only one copy of the app opens a
+  vault; a second open is refused with `VaultInUse`. The index keeps its previous copy. The
   recipe is tested on Windows, macOS and Linux, because replacing a file
   behaves differently on Windows.
 - **Which copy wins.** The index is the truth; each metadata file is its
@@ -112,7 +115,12 @@ app ─► ui ─► vault ─► crypto
   - an index entry whose metadata file is behind or missing has that file
     rewritten from the index;
   - a content file with neither an index entry nor a metadata file is
-    left from an unfinished add or remove, and is deleted.
+    left from an unfinished add or remove, and is deleted;
+  - an index entry whose content and metadata files are both gone is
+    dropped;
+  - a missing content file beside a metadata file, or an unreadable
+    metadata file with no index entry, marks the document damaged: it
+    stays on disk and is listed by `Vault.damaged()`.
 - **Names on disk.** Each document is two encrypted files sharing one
   random id: its content, and a small metadata file holding its title,
   category, tags, note, dates, original filename, file type, extracted
@@ -122,8 +130,8 @@ app ─► ui ─► vault ─► crypto
   re-extracted. No title, date, category or original filename appears
   in any name (S5).
 - **Format version.** The vault header and every file in the vault
-  carry a format number from the first release. Opening a vault runs
-  `migrate` first. It rewrites one file at a time through
+  except `lock` carry a format number from the first release. Opening a
+  vault runs `migrate` first. It rewrites one file at a time through
   `vault/atomic.py` and updates the header's number last, so an
   interrupted migration resumes on the next open. A vault or file newer
   than the app is refused with a clear message, never guessed at (S9).
