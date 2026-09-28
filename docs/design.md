@@ -104,10 +104,15 @@ app ─► ui ─► vault ─► crypto
 
 - **Errors.** Every expected failure is one of the types in
   `errors.py`, which is the full list; a new expected failure adds a type
-  there. `ui` turns each into one plain-English message. Nothing catches
+  there. `ui` turns each into one plain-language message. Nothing catches
   an error and carries on silently: documents found damaged while
   opening are listed by `Vault.damaged()`, and `ui` shows that list when
   the vault opens.
+- **Text on screen.** Inside the app, only `ui` writes text the user
+  reads, and every such string goes through Qt's translation mechanism.
+  Every window lays out correctly when mirrored for right-to-left
+  languages (DEED-0035).
+  Dates are shown in the user's locale format.
 - **State.** An open vault is one `Vault` object. The key exists only in
   that object's memory while the vault is open, and is dropped on close.
   Decrypted documents live in memory only while shown.
