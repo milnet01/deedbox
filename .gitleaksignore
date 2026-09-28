@@ -1,0 +1,6 @@
+# The sample vault's key record (docs/specs/DEED-0004-format-migration.md
+# § 4.4). It wraps a key that protects only this public test fixture, whose
+# password is published in tests/fixtures/sample_vault.py on purpose. Not a
+# secret. The fixture is frozen (INV-2), so these fingerprints do not move.
+9bc3470dd4e15991779da13d03a4f80b74f21c6e:tests/fixtures/vault-format-1/vault.deedbox:generic-api-key:1
+tests/fixtures/vault-format-1/vault.deedbox:generic-api-key:1
