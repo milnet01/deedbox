@@ -2,8 +2,8 @@
 
 ## Where this project is
 
-**State:** 4 — Between items. Roadmap queued (`ROADMAP.md`, 0.1.0).
-**In flight:** nothing.
+**State:** 5 — On an item. Roadmap queued (`ROADMAP.md`, 0.1.0).
+**In flight:** DEED-0004 (format migration; spec accepted).
 
 > Keep the two lines above true, and keep them to two lines. They are
 > the only position this project records. Everything else about where
