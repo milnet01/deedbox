@@ -9,7 +9,7 @@ item off the queue and say which part it belongs in and what it may
 touch.
 
 **Status:** agreed; the packaging part and rules 10–11 reviewed
-2026-09-28. Built from `docs/discovery.md`; its sign labels (S1–S10)
+2026-09-28. The update part and its rules (DEED-0024) added 2026-09-28. Built from `docs/discovery.md`; its sign labels (S1–S10)
 are cited below.
 
 ## The parts
@@ -28,6 +28,7 @@ All code lives in the Python package `src/deedbox/`. Tests mirror it under
 | **extract** | Getting text out of a document: the free path for PDFs that already contain text, and OCR for scans (S3), rendering scanned PDF pages to images in memory first. Plain and synchronous; `ui` runs it in a worker thread. | `src/deedbox/extract/pdftext.py`, `extract/ocr.py` |
 | **suggest** | Proposing a title, category and date from a filename and extracted text. Suggests only; never files. | `src/deedbox/suggest.py` |
 | **export** | The only code that writes readable plaintext to disk: one document, or the whole vault (S7). | `src/deedbox/export.py` |
+| **update** | Checking for, downloading and installing a new release (DEED-0024), only once the user has turned updates on or asked for a check. The only code that opens a network connection. Asks `crypto` to check each download's signature before installing it. | `src/deedbox/update/`; the network code in `update/fetch.py` alone |
 | **errors** | The shared error types every part raises. | `src/deedbox/errors.py` |
 | **ui** | Every window, dialog and the in-window document viewer, and the worker threads for extraction. Runs the expiry check when the main window opens. | `src/deedbox/ui/` — one file per window or dialog |
 | **app** | Start-up: builds the Qt application and opens the first window. | `src/deedbox/__main__.py` |
@@ -49,7 +50,8 @@ The rules, strongest first. A test can check each by reading imports.
    settings.** `crypto` hands `vault` a key-derivation record — the
    Argon2id settings, salt and wrapped vault key as one byte string —
    and `vault` stores it in the header without reading it.
-3. **Only `vault` calls `crypto`**, and only `vault` reads or writes files
+3. **Only `vault` and `update` call `crypto`** — `update` only to check a
+   download's signature — and only `vault` reads or writes files
    inside the vault folder. Every other part gets documents and the index
    through the `Vault` object in `vault/vault.py`.
 4. **Only `export` writes decrypted content to disk**, and only when the
@@ -63,25 +65,30 @@ The rules, strongest first. A test can check each by reading imports.
    vault file and holds no thread or Qt signal. Scanned PDF pages become
    images in memory; OCR hands those image bytes to the OCR tool through
    a pipe.
-7. **No part opens a network connection.** Deedbox has no network code
-   at all (discovery: nothing leaves the machine).
-8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract` and
-   `export`. **It may not call** `crypto`, and it may not build a path
+7. **Only `update/fetch.py` opens a network connection**, and only after
+   the user turned updates on or asked for a check. It sends nothing
+   about the user's documents. No other file imports a network library
+   (discovery: documents never leave the machine).
+8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract`,
+   `export` and `update`. **It may not call** `crypto`, and it may not build a path
    inside the vault folder.
 9. **Nothing depends on `ui` or `app`.** Every part may import `errors`.
-10. **`app` may call only `ui`**, and **`export` may call only `vault`**
-    (besides `errors`). These were arrows in the diagram below; the
+10. **`app` may call only `ui`**, **`export` may call only `vault`**, and
+    **`update` may call only `crypto`** (besides `errors`). These were arrows in the diagram below; the
     diagram renders the rules and does not add to them.
 11. **`packaging` is not imported by anything and imports nothing from
     `src/deedbox/`.** It builds installers from the tree and the
-    dependency lock; no Deedbox code may assume it runs installed.
+    dependency lock; no Deedbox code may assume it runs installed. Only
+    `update` asks how Deedbox was installed, and it does nothing when it
+    cannot tell.
 
 ```
 app ─► ui ─► vault ─► crypto
         │      └────► errors
         ├─► search, expiry, suggest   (pure)
         ├─► extract
-        └─► export ─► vault
+        ├─► export ─► vault
+        └─► update ─► crypto
 ```
 
 ## What every part does the same way

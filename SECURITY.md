@@ -10,7 +10,9 @@
   never stored (`docs/decisions/ADR-0001-crypto-library.md`).
 - **Documents you add.** Stored as data and shown in Deedbox's own
   window; never run.
-- **The network.** Deedbox makes no network connections.
+- **The network.** Deedbox makes no network connections. A planned
+  updater (DEED-0024), off until you turn it on, will be the one
+  exception; this line changes when it ships.
 
 Deedbox protects the vault at rest. It does not protect a computer that
 is already compromised while the vault is open.

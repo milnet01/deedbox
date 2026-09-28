@@ -11,7 +11,8 @@ be things you could actually observe.
 `~/.claude/workflow.md` § 2. It passes when a stranger could read it and
 say whether a given feature serves it.
 
-**Status:** agreed by the owner, 2026-09-27.
+**Status:** agreed by the owner, 2026-09-27; the opt-in updater added
+by the owner, 2026-09-28.
 Drawn from `docs/brief.md`; decisions recorded there are not reopened here.
 
 ## The problem
@@ -68,7 +69,9 @@ apps with expiry reminders are phone-only (`docs/brief.md`, Prior-art check).
 ## What it deliberately does not do
 
 - **No cloud, no sync, no server — ever, not just in the first release.**
-  Nothing leaves the machine.
+  Your documents never leave the machine. The one network use is the
+  self-updater, which is off until you turn it on and sends nothing
+  about your documents (DEED-0024).
 - **No sharing and no multiple users.** One person, one computer.
 - **No automatic filing rules.** It suggests; it never files on its own.
   A silent misfile is worse than no help.

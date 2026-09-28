@@ -269,6 +269,24 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   owner's pick; then check EU/UK registers for that one name before
   renaming.
 
+- 📋 [DEED-0024] **Opt-in self-updater on Windows, macOS and Linux (Flatpak).**
+  The one network use Deedbox has. Off until the user turns it on;
+  a manual "Check for updates" also runs. Modelled on finbreak's
+  updater (its FIBR-0054 and FIBR-0131 specs): GitHub releases over
+  HTTPS only, the download's signature checked before it replaces
+  the app. Needs a spec (write-spec) before it is built.
+  Blocked-by: DEED-0014
+  Decided (2026-09-28, owner): all three systems, the Flatpak
+  included; the signature check lives in `crypto`.
+  Build note (2026-09-28): tests/test_dependency_rules.py keeps its
+  own copy of the design's parts. Building this adds an `update` part
+  there, lets it call `crypto`, and lets `update/fetch.py` alone import
+  a network library, per docs/design.md rules 3, 7, 10 and 11.
+  **Layman:** Deedbox can fetch and install its own new versions, but only if you switch that on.
+  Kind: feature.
+  Source: user-request-2026-09-28.
+  Lanes: update, crypto, ui, packaging.
+
 ## Later (no version yet)
 
 Ideas deliberately left out of 0.1.0. None is promised. Which of them become
