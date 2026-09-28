@@ -1,6 +1,6 @@
 # DEED-0004 — Format versions and the migration framework
 
-**Status:** draft.
+**Status:** accepted (2026-09-28).
 **Kind:** implement.
 **Source:** ROADMAP DEED-0004 (`docs/design.md` § The parts, the
 `migrate` row, and § What every part does the same way, *Format
@@ -103,9 +103,9 @@ STEPS: dict[tuple[str, int], Step] = {}
   signature differs and is declared beside the registry. Most bumps
   change no header field, so a missing header step leaves the object as
   it is.
-- A file below its kind's number with no step for its number is a
-  release that raised a number without shipping the step: `run` raises
-  `KeyError` and the open fails.
+- A file at a number from 1 up to below its kind's, with no step for
+  that number, is a release that raised a number without shipping the
+  step: `run` raises `KeyError` and the open fails.
 - No step exists in this item; there is only format 1.
 
 ### 4.3 Opening, step 2
@@ -121,9 +121,9 @@ leftovers are deleted.
    from the file's number up, each through `atomic.write_stream` onto
    the same path. Each application is its own atomic replace, so the
    file on disk is always at some whole format.
-3. A step raising `VaultCorrupt` leaves that file as it is and moves to
-   the next file. `run` returns the ids of the content files it left
-   behind. Any other exception propagates, and the open fails.
+3. A step raising `VaultCorrupt`, or a prefix number below 1, leaves
+   that file as it is and moves to the next file. Any other exception
+   propagates, and the open fails.
 4. Last, apply the header steps and write the header with `format` set
    to `VAULT_FORMAT` through `atomic.write_bytes`.
 
@@ -140,9 +140,11 @@ unreadable to the rest of the open (§ 4.1), and DEED-0003 § 4.6 handles
 it as it handles any unreadable file: an index copy is passed over for
 the other, and a metadata file is rewritten from the index where the
 index lists it, or its id goes to `damaged()` where it does not. A
-content file left behind cannot be recovered from anything, so
-`Vault.open` adds the ids `run` returned to `damaged()`; reading one
-raises `VaultCorrupt`.
+content file left behind cannot be recovered from anything, and the
+header no longer sends later opens back through step 2. So DEED-0003's
+step 0, which reads every prefix on every open, also collects each `.c`
+whose number is below its kind's or below 1, and `Vault.open` adds
+those ids to `damaged()`. Reading one raises `VaultCorrupt`.
 
 ### 4.4 The sample vault
 
@@ -164,7 +166,9 @@ Content bytes are generated from each filename by
 bytes need no second copy. That module also holds the generator, which
 refuses to write into an existing folder.
 `tests/fixtures/vault-format-1.sha256`, beside the folder, lists the hash
-of every file in it. The `lock` file is not checked in.
+of every file in it. The generator deletes `lock` after closing the
+vault. `.gitattributes` marks the folder and the hash list `-text`, so
+a Windows checkout does not rewrite `vault.deedbox`'s line endings.
 
 The fixture is never regenerated. A later release that changes a format
 keeps this folder and adds a step.
@@ -195,7 +199,8 @@ fixture isolates.
   *Test:* `tests/test_migrate.py::test_migrates_to_current` — patches
   `FILE_FORMAT["index"]` and `VAULT_FORMAT` to 2 and registers an index
   step 1→2 that re-seals under format 2 and records each path it is
-  called with, then opens a format-1 vault. The step was called for
+  called with, then opens a format-1 vault holding documents, so it has
+  an `index.prev`. The step was called for
   exactly `index` and `index.prev`; afterwards both and the header carry
   2, and `documents()` and every `read` match the values before. The
   record is what isolates step 2: skipping `index` alone still ends with
@@ -214,7 +219,7 @@ fixture isolates.
 - **INV-5** — A migration cut off part-way resumes on the next open and
   ends with every document intact.
   *Test:* `tests/test_migrate.py::test_interrupted_migration_resumes` —
-  with `metadata`, `index` and `VAULT_FORMAT` raised to 2, the registered metadata
+  with `metadata` and `VAULT_FORMAT` raised to 2, the registered metadata
   step raises `OSError` on its second call. The open fails; the header
   is still 1, and each `.m` is at 1 or 2. A second open with the step
   healthy succeeds, and every document reads as before. The step
@@ -234,7 +239,8 @@ fixture isolates.
   from the index at format 2, its metadata matches the index, and its
   id is not in `damaged()`. The second's `.m` is byte-identical and its
   id is in `damaged()`. The third's id is in `damaged()` and its `read`
-  raises `VaultCorrupt`. Every other document reads.
+  raises `VaultCorrupt`. Every other document reads. A second open,
+  with nothing left to upgrade, still lists the second and third ids.
   *Breaks when:* one bad file aborts the upgrade, or a step's failure
   deletes the file.
 
@@ -318,7 +324,10 @@ existing refusal tests (`tests/test_vault.py::test_too_new`,
 - DEED-0002 § 4.3 says a format number above 1 raises `VaultTooNew`;
   that now means above the file's kind's number. With every number at 1
   the behaviour is the same.
-- DEED-0003 § 4.6 step 2 names this item; its text still holds.
+- DEED-0003 § 4.6 step 2 names this item; its text still holds. Its
+  step 0 gains one duty from § 4.3: it collects each `.c` below its
+  kind's number for `damaged()`. DEED-0003 § 4.6 is amended to say so
+  when this item is built.
 - `docs/design.md` § Format version already states the order (files one
   at a time, header last); no change.
 
