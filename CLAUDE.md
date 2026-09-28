@@ -2,7 +2,7 @@
 
 ## Where this project is
 
-**State:** 4 — Between items. Roadmap queued (`ROADMAP.md`, 0.1.0).
+**State:** 4 — Between items. Roadmap queued (`ROADMAP.md`, 0.1.0 and 0.2.0).
 **In flight:** nothing.
 
 > Keep the two lines above true, and keep them to two lines. They are
