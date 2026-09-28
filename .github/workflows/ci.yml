@@ -37,6 +37,10 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.12", "3.14"]
     runs-on: ${{ matrix.os }}
+    # local-gate.md § 9. A hung job otherwise burns up to six hours. There is
+    # no cache, so every run is cold; the slowest measured cold job was under
+    # two minutes (Windows, 2026-09-28).
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
