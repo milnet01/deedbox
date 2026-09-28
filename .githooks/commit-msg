@@ -13,7 +13,7 @@
 
 set -u
 msg_file="$1"
-subject=$(head -1 "$msg_file")
+subject=$(awk '/^#/ {next} /^[[:space:]]*$/ {exit} {printf "%s%s", sep, $0; sep=" "}' "$msg_file")
 
 # Ignore merges, reverts, fixups and comment-only aborts.
 case "$subject" in
