@@ -6,7 +6,6 @@ docs/specs/DEED-0003-index-and-recovery.md § 4.2, § 4.3 and § 4.6.
 from __future__ import annotations
 
 import json
-import struct
 from pathlib import Path
 
 from deedbox import crypto
@@ -20,25 +19,41 @@ PREVIOUS = "index.prev"
 
 def check_prefixes(folder: Path) -> None:
     """Step 0: refuse any file newer than this release before writing."""
-    candidates = [
-        (folder / INDEX, layout.INDEX_MAGIC),
-        (folder / PREVIOUS, layout.INDEX_MAGIC),
+    for path, kind in encrypted_files(folder):
+        fmt = layout.file_format(head(path), kind)
+        if fmt is not None and fmt > layout.FILE_FORMAT[kind]:
+            raise VaultTooNew(f"{path.name} has format {fmt}")
+
+
+def stale_content(folder: Path) -> list[str]:
+    """Ids whose content file migration left below its format (DEED-0004 § 4.3)."""
+    return [
+        path.stem
+        for path, kind in encrypted_files(folder)
+        if kind == "content"
+        and layout.is_id(path.stem)
+        and (fmt := layout.file_format(head(path), kind)) is not None
+        and fmt < layout.FILE_FORMAT[kind]
     ]
-    for path in (folder / layout.OBJECTS).iterdir():
+
+
+def encrypted_files(folder: Path) -> list[tuple[Path, str]]:
+    """Every file that carries a prefix, with its kind: objects, then the index."""
+    files = []
+    for path in sorted((folder / layout.OBJECTS).iterdir()):
         if path.suffix == ".c":
-            candidates.append((path, layout.CONTENT_MAGIC))
+            files.append((path, "content"))
         elif path.suffix == ".m":
-            candidates.append((path, layout.METADATA_MAGIC))
-    for path, magic in candidates:
-        try:
-            with path.open("rb") as f:
-                head = f.read(layout.PREFIX_BYTES)
-        except FileNotFoundError:
-            continue
-        if len(head) == layout.PREFIX_BYTES and head[:4] == magic:
-            (fmt,) = struct.unpack(">H", head[4:])
-            if fmt > layout.FORMAT:
-                raise VaultTooNew(f"{path.name} has format {fmt}")
+            files.append((path, "metadata"))
+    return [*files, (folder / PREVIOUS, "index"), (folder / INDEX, "index")]
+
+
+def head(path: Path) -> bytes:
+    try:
+        with path.open("rb") as f:
+            return f.read(layout.PREFIX_BYTES)
+    except FileNotFoundError:
+        return b""
 
 
 def delete_leftovers(folder: Path) -> bool:
@@ -60,7 +75,7 @@ def load(folder: Path, key: bytes) -> tuple[list[dict], str]:
 
 def read(path: Path, key: bytes) -> list[dict]:
     data = path.read_bytes()
-    fmt = layout.check_prefix(data, layout.INDEX_MAGIC)
+    fmt = layout.check_prefix(data, "index")
     plain = crypto.unseal(
         key, data[layout.PREFIX_BYTES :], crypto.associated_data("index", fmt)
     )
@@ -83,8 +98,10 @@ def save(folder: Path, key: bytes, entries: list[dict], *, keep_previous: bool) 
     if keep_previous and current.exists():
         atomic.write_bytes(folder / PREVIOUS, current.read_bytes())
     body = json.dumps({"documents": entries}).encode("utf-8")
-    sealed = crypto.seal(key, body, crypto.associated_data("index", layout.FORMAT))
-    atomic.write_bytes(current, layout.prefix(layout.INDEX_MAGIC) + sealed)
+    sealed = crypto.seal(
+        key, body, crypto.associated_data("index", layout.FILE_FORMAT["index"])
+    )
+    atomic.write_bytes(current, layout.prefix("index") + sealed)
 
 
 def reconcile(

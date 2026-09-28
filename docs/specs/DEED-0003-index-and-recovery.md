@@ -126,8 +126,8 @@ nothing — DEED-0002 INV-2):
    another process or another `Vault` in this process holds it, raise
    `VaultInUse`. `create` takes the same lock. The lock is released by
    `close`, and by the OS if the process dies.
-2. **Migrate.** DEED-0004's step. Until it exists, DEED-0002's refusal of
-   a newer format is the whole of it.
+2. **Migrate** (DEED-0004 § 4.3). Then each `.c` still below its
+   format is listed by `damaged()`.
 3. **Delete leftovers.** Every `*.tmp` in the vault folder and in
    `objects/` is an interrupted write (DEED-0002 § 4.6) and is deleted.
 4. **Load the index.** Decrypt `index`; if it is missing or will not

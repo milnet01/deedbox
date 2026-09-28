@@ -16,9 +16,9 @@ from deedbox.vault import atomic, layout
 
 
 def write_content(path: Path, key: bytes, src: BinaryIO, doc_id: str) -> None:
-    ad = crypto.associated_data("content", layout.FORMAT, doc_id)
+    ad = crypto.associated_data("content", layout.FILE_FORMAT["content"], doc_id)
     with atomic.write_stream(path) as out:
-        out.write(layout.prefix(layout.CONTENT_MAGIC))
+        out.write(layout.prefix("content"))
         crypto.encrypt_stream(key, src, out, ad)
 
 
@@ -28,7 +28,7 @@ def read_content(path: Path, key: bytes, doc_id: str) -> bytes:
     except FileNotFoundError as err:
         raise DocumentMissing(doc_id) from err
     with src:
-        fmt = layout.check_prefix(src.read(layout.PREFIX_BYTES), layout.CONTENT_MAGIC)
+        fmt = layout.check_prefix(src.read(layout.PREFIX_BYTES), "content")
         out = io.BytesIO()
         crypto.decrypt_stream(
             key, src, out, crypto.associated_data("content", fmt, doc_id)
@@ -37,11 +37,9 @@ def read_content(path: Path, key: bytes, doc_id: str) -> bytes:
 
 
 def write_metadata(path: Path, key: bytes, metadata: dict, doc_id: str) -> None:
-    ad = crypto.associated_data("metadata", layout.FORMAT, doc_id)
+    ad = crypto.associated_data("metadata", layout.FILE_FORMAT["metadata"], doc_id)
     body = json.dumps(metadata).encode("utf-8")
-    atomic.write_bytes(
-        path, layout.prefix(layout.METADATA_MAGIC) + crypto.seal(key, body, ad)
-    )
+    atomic.write_bytes(path, layout.prefix("metadata") + crypto.seal(key, body, ad))
 
 
 def read_metadata(path: Path, key: bytes, doc_id: str) -> dict:
@@ -49,7 +47,7 @@ def read_metadata(path: Path, key: bytes, doc_id: str) -> dict:
         data = path.read_bytes()
     except FileNotFoundError as err:
         raise DocumentMissing(doc_id) from err
-    fmt = layout.check_prefix(data, layout.METADATA_MAGIC)
+    fmt = layout.check_prefix(data, "metadata")
     ad = crypto.associated_data("metadata", fmt, doc_id)
     plain = crypto.unseal(key, data[layout.PREFIX_BYTES :], ad)
     try:

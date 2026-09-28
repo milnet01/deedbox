@@ -141,10 +141,12 @@ it as it handles any unreadable file: an index copy is passed over for
 the other, and a metadata file is rewritten from the index where the
 index lists it, or its id goes to `damaged()` where it does not. A
 content file left behind cannot be recovered from anything, and the
-header no longer sends later opens back through step 2. So DEED-0003's
-step 0, which reads every prefix on every open, also collects each `.c`
-whose number is below its kind's or below 1, and `Vault.open` adds
-those ids to `damaged()`. Reading one raises `VaultCorrupt`.
+header no longer sends later opens back through step 2. So every open,
+right after step 2, reads each `.c` prefix and collects those whose
+number is below its kind's or below 1 (`index.stale_content`), and
+`Vault.open` adds those ids to `damaged()`. Reading one raises
+`VaultCorrupt`. Collecting at step 0 instead would list every content
+file an upgrade in the same open is about to bring up.
 
 ### 4.4 The sample vault
 
@@ -249,9 +251,12 @@ fixture isolates.
   *Test:* `tests/test_migrate.py::test_newer_kind_refused` — with
   `FILE_FORMAT["index"]` and `VAULT_FORMAT` patched to 2, a vault
   created under the patch opens, its `index` at 2. Then one `.m`'s
-  prefix is set to 2 and the open raises `VaultTooNew`. A check against
-  the highest number of any kind passes the `.m`; one against the
-  metadata number refuses the `index`.
+  prefix is set to 2, a leftover `.tmp` is placed in the vault folder,
+  and the open raises `VaultTooNew` with the folder unchanged. A check
+  against the metadata number refuses the `index`. One against the
+  highest number of any kind passes the `.m` at step 0; the metadata
+  reader then refuses it, but only after step 3 has deleted the `.tmp`,
+  and that is what the unchanged folder catches.
   *Breaks when:* a check compares against another kind's number.
 
 ## 6. Failure modes
@@ -325,9 +330,9 @@ existing refusal tests (`tests/test_vault.py::test_too_new`,
   that now means above the file's kind's number. With every number at 1
   the behaviour is the same.
 - DEED-0003 § 4.6 step 2 names this item; its text still holds. Its
-  step 0 gains one duty from § 4.3: it collects each `.c` below its
-  kind's number for `damaged()`. DEED-0003 § 4.6 is amended to say so
-  when this item is built.
+  open gains one duty from § 4.3, right after step 2: it collects each
+  `.c` below its kind's number for `damaged()`. DEED-0003 § 4.6 is
+  amended to say so when this item is built.
 - `docs/design.md` § Format version already states the order (files one
   at a time, header last); no change.
 

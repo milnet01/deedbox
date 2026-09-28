@@ -1,7 +1,8 @@
 """The `Vault` object: the only way other parts reach a vault's files.
 
 docs/specs/DEED-0002-vault-format.md § 4.2, § 4.6 and § 4.7;
-docs/specs/DEED-0003-index-and-recovery.md § 4.5 to § 4.7.
+docs/specs/DEED-0003-index-and-recovery.md § 4.5 to § 4.7;
+docs/specs/DEED-0004-format-migration.md § 4.3.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from deedbox.errors import (
     VaultExists,
     VaultTooNew,
 )
-from deedbox.vault import atomic, documents, index, layout
+from deedbox.vault import atomic, documents, index, layout, migrate
 from deedbox.vault.lock import VaultLock
 
 LOCK = "lock"
@@ -70,7 +71,7 @@ class Vault:
         lock = VaultLock(folder / LOCK)
         try:
             header = {
-                "format": layout.FORMAT,
+                "format": layout.VAULT_FORMAT,
                 "key_record": base64.b64encode(record).decode("ascii"),
             }
             atomic.write_bytes(
@@ -90,14 +91,17 @@ class Vault:
         written.
         """
         folder = Path(folder)
-        key = crypto.unlock(cls._read_header(folder), password)
+        record, header_format = cls._read_header(folder)
+        key = crypto.unlock(record, password)
         index.check_prefixes(folder)
         lock = VaultLock(folder / LOCK)
         try:
-            # Step 2, migration, is DEED-0004's.
+            migrate.run(folder, key, header_format)
+            stale = index.stale_content(folder)
             cleaned = index.delete_leftovers(folder)
             entries, source = index.load(folder, key)
             entries, changed, damaged = index.reconcile(folder, key, entries)
+            damaged += [doc_id for doc_id in stale if doc_id not in damaged]
             keep_previous = source == index.INDEX
             if source != index.INDEX or cleaned or changed:
                 index.save(folder, key, entries, keep_previous=keep_previous)
@@ -209,8 +213,8 @@ class Vault:
         return self._key
 
     @staticmethod
-    def _read_header(folder: Path) -> bytes:
-        """The key record, once the header's format is one this release reads."""
+    def _read_header(folder: Path) -> tuple[bytes, int]:
+        """The key record and the header's format, once it is one this release reads."""
         try:
             raw = (folder / layout.HEADER).read_bytes()
         except FileNotFoundError as err:
@@ -229,8 +233,8 @@ class Vault:
             raise VaultCorrupt("the vault header is malformed") from err
         if not isinstance(fmt, int) or isinstance(fmt, bool):
             raise VaultCorrupt("the vault header's format is not a number")
-        if fmt > layout.FORMAT:
+        if fmt > layout.VAULT_FORMAT:
             raise VaultTooNew(f"vault format {fmt}")
-        if fmt != layout.FORMAT:
+        if fmt < 1:
             raise VaultCorrupt(f"vault format {fmt}")
-        return record
+        return record, fmt
