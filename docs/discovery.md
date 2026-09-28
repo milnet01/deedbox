@@ -11,8 +11,7 @@ be things you could actually observe.
 `~/.claude/workflow.md` § 2. It passes when a stranger could read it and
 say whether a given feature serves it.
 
-**Status:** agreed by the owner, 2026-09-27; the opt-in updater added
-by the owner, 2026-09-28.
+**Status:** agreed by the owner, 2026-09-27.
 Drawn from `docs/brief.md`; decisions recorded there are not reopened here.
 
 ## The problem

@@ -282,10 +282,30 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   own copy of the design's parts. Building this adds an `update` part
   there, lets it call `crypto`, and lets `update/fetch.py` alone import
   a network library, per docs/design.md rules 3, 7, 10 and 11.
+  Decided (2026-09-28, owner, from the design review): the Linux
+  Flatpak updates through Flatpak's update portal, which `ui` asks
+  through QtDBus; Deedbox downloads nothing there. `update` downloads
+  and verifies on Windows and macOS only. The dependency test must also
+  let `update` use `tempfile` for a downloaded release (design rule 4),
+  and the "updates on" setting is `ui`'s (design § Settings).
   **Layman:** Deedbox can fetch and install its own new versions, but only if you switch that on.
   Kind: feature.
   Source: user-request-2026-09-28.
   Lanes: update, crypto, ui, packaging.
+
+- 📋 [DEED-0025] **Design: name the input shape of search, expiry and suggest.**
+  docs/design.md rule 3 says "Every other part gets documents and the
+  index through the `Vault` object", but tests/test_dependency_rules.py
+  lets `search`, `expiry` and `suggest` import only `errors`, so they
+  cannot take a `Vault` or import its entry type. The design does not
+  say what they receive — plain values `ui` extracts, or a shared type
+  every part may import. Narrow rule 3's "every other part" to `ui` and
+  `export`, and name the shape. Found by one cold lane; pre-existing,
+  outside the DEED-0024 gate, so filed rather than fixed in that run.
+  **Layman:** Settles how the search and date-checking code receive document details, before either is built.
+  Kind: doc-fix.
+  Source: review-contract design.md loop 5, 2026-09-28.
+  Lanes: design, search, vault.
 
 ## Later (no version yet)
 
