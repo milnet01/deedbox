@@ -378,3 +378,27 @@ The release after 0.1.0. Its items were moved here from "Later" by the owner on 
   Kind: feature.
   Source: brief-2026-09-27.
   Lanes: ui, vault.
+
+- 📋 [DEED-0027] **Translations: Afrikaans, right-to-left languages, and common European languages with their American variants.**
+  Owner's list (2026-09-28): Afrikaans; right-to-left languages;
+  common European languages, including their variants in the Americas
+  (for example es-419 and pt-BR beside es-ES and pt-PT). Needs every
+  user-facing string translatable and layouts that mirror for
+  right-to-left, which is cheapest to decide before the windows are
+  built; the path to 1.0.0 proposal settles when.
+  **Layman:** Use Deedbox in your own language, including Afrikaans, Arabic or Hebrew, and Spanish or Portuguese as spoken in the Americas.
+  Kind: feature.
+  Source: user-request-2026-09-28.
+  Lanes: ui, packaging.
+
+- 📋 [DEED-0028] **Themes.**
+  **Layman:** Choose how Deedbox looks, such as light or dark.
+  Kind: feature.
+  Source: user-request-2026-09-28.
+  Lanes: ui.
+
+- 📋 [DEED-0029] **Accessibility.**
+  **Layman:** Make Deedbox usable with a keyboard alone, a screen reader, large text and high contrast.
+  Kind: accessibility.
+  Source: user-request-2026-09-28.
+  Lanes: ui.
