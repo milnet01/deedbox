@@ -1,4 +1,5 @@
 <!-- ants-roadmap-format: 1 -->
+<!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
 # Deedbox — Roadmap
 
 > What is planned, in progress and shipped. [CHANGELOG.md](CHANGELOG.md)
@@ -12,6 +13,7 @@
 **Legend**
 
 - ✅ Done · 🚧 In progress · 📋 Planned · 💭 Considered
+- 🚫 Dropped (closed, not done)
 
 ## 0.1.0 — (first release)
 
@@ -107,8 +109,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0005
   **Layman:** Lets you label each document, with sensible guesses you can always change.
   Kind: implement.
-  Lanes: ui, suggest.
   Source: design-2026-09-27.
+  Lanes: ui, suggest.
 
 - 📋 [DEED-0007] **Search, including text already inside PDFs.**
   `search` over titles, tags, notes and extracted text; `extract`'s free
@@ -117,8 +119,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0006
   **Layman:** Find a document by typing anything you remember about it.
   Kind: implement.
-  Lanes: search, extract, ui.
   Source: design-2026-09-27.
+  Lanes: search, extract, ui.
 
 - 📋 [DEED-0008] **Expiry tracking and the upcoming view.**
   Build step 4. Expiry and renewal dates, an upcoming view, the check
@@ -128,8 +130,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0006
   **Layman:** Shows what is about to run out as soon as you open the app.
   Kind: implement.
-  Lanes: expiry, ui.
   Source: design-2026-09-27.
+  Lanes: expiry, ui.
 
 - 📋 [DEED-0009] **OCR for scans, in the background.**
   Build step 5. First confirm Tesseract reads images from a pipe with no
@@ -140,8 +142,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0007
   **Layman:** Lets search find words printed inside scanned documents and photos.
   Kind: implement.
-  Lanes: extract, ui.
   Source: design-2026-09-27.
+  Lanes: extract, ui.
 
 - 📋 [DEED-0010] **Export one document or the whole vault.**
   Original filenames and types, readable without Deedbox, never written
@@ -149,8 +151,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0005
   **Layman:** Get any document back out as a normal file, or everything at once.
   Kind: implement.
-  Lanes: export, ui.
   Source: design-2026-09-27.
+  Lanes: export, ui.
 
 - 📋 [DEED-0011] **Owner files real paperwork for a week.**
   Twenty real documents from Downloads, used for a week (`docs/brief.md`,
@@ -159,8 +161,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0005, DEED-0006, DEED-0007, DEED-0008, DEED-0010
   **Layman:** The real test: you use it for your own papers for a week and it earns its place.
   Kind: test.
-  Lanes: ui.
   Source: design-2026-09-27.
+  Lanes: ui.
 
 - 📋 [DEED-0012] **Independent security review of the crypto and vault code.**
   Required before the first public release (`docs/brief.md`, Releasing
@@ -181,8 +183,8 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Blocked-by: DEED-0005
   **Layman:** Plain-English help on setting up, backing up, and what a forgotten password means.
   Kind: doc.
-  Lanes: ui, docs.
   Source: design-2026-09-27.
+  Lanes: ui, docs.
 
 - 📋 [DEED-0014] **Installers: Windows and macOS builds (unsigned at first), Flatpak for Linux.**
   Build step 6. PyInstaller for Windows and macOS, Flatpak for Linux,
@@ -277,36 +279,36 @@ Ideas deliberately left out of 0.1.0. None is promised. Which of them become
   `docs/brief.md` wants it only if it works on all three systems.
   **Layman:** Deedbox could warn you about an expiring passport even when it isn't open.
   Kind: feature.
-  Lanes: ui.
   Source: discovery-2026-09-27.
+  Lanes: ui.
 
 - 💭 [DEED-0018] **Signed Windows and macOS installers.**
   DEED-0014 ships unsigned at first, by the owner's decision.
   macOS needs a paid Apple developer account.
   **Layman:** Stops Windows and Mac warning that the app comes from an unknown developer.
   Kind: package.
-  Lanes: packaging.
   Source: owner-decision-2026-09-28.
+  Lanes: packaging.
 
 - 💭 [DEED-0019] **Change the password, and strengthen an existing vault's password protection.**
   Deferred in `docs/specs/DEED-0002-vault-format.md` § 9.
   **Layman:** Lets you pick a new password, and makes an old vault as hard to crack as a new one.
   Kind: feature.
-  Lanes: crypto, vault.
   Source: DEED-0002 spec § 9.
+  Lanes: crypto, vault.
 
 - 💭 [DEED-0020] **Read-only vaults, and vaults on a network drive.**
   Deferred in `docs/specs/DEED-0003-index-and-recovery.md` § 9.
   A network share's file locks may not work.
   **Layman:** Opening a vault from a locked-down folder or a shared drive.
   Kind: feature.
-  Lanes: vault.
   Source: DEED-0003 spec § 9.
+  Lanes: vault.
 
 - 💭 [DEED-0021] **More than one vault.**
   `docs/brief.md` leans to one vault, without hard-coding a
   single path.
   **Layman:** Separate vaults, for example one for the household and one personal.
   Kind: feature.
-  Lanes: ui, vault.
   Source: brief-2026-09-27.
+  Lanes: ui, vault.
