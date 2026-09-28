@@ -351,6 +351,24 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Source: user-request-2026-09-28.
   Lanes: ui, design.
 
+- 📋 [DEED-0036] **Design: an extraction status for failed or impossible extraction, and the no-OCR wording.**
+  Two pre-existing gaps both cold lanes raised, outside the DEED-0035
+  gate. (1) docs/design.md § Names on disk stores an extraction status
+  of "not yet run, done, or no OCR tool", with no value for a failed
+  extraction (a malformed PDF, an OCR crash) or a file that cannot be
+  extracted (a stored type that is neither PDF nor image). `ui` queues
+  every document whose extraction "has not run", so without a terminal
+  status such documents re-queue on every open; and the status is on
+  disk, so adding one later is a format change. (2) The stack table's
+  Tesseract row says "Missing → search covers typed fields only", but
+  text PDFs are extracted by pypdf without Tesseract. Should read:
+  scanned documents are searchable by typed fields only.
+  Blocks DEED-0009, which builds extraction.
+  **Layman:** Settles what Deedbox records when it cannot read the text in a document, before the reading code is built.
+  Kind: doc-fix.
+  Source: review-contract design.md loop 9, 2026-09-28.
+  Lanes: design, extract, vault.
+
 ## 0.2.0
 
 The release after 0.1.0. Its items were moved here from "Later" by the owner on 2026-09-28.

@@ -31,7 +31,7 @@ All code lives in the Python package `src/deedbox/`. Tests mirror it under
 | **update** | On Windows and macOS: checking for, downloading and installing a new release (DEED-0024). The only code that opens a network connection. Asks `crypto` to check each download's signature before installing it. Also tells `ui` how Deedbox was installed. The Linux Flatpak cannot replace its own files; there `ui` asks Flatpak's update service, through Qt, to install the new version from the store it came from. | `src/deedbox/update/`; the network code in `update/fetch.py` alone |
 | **errors** | The shared error types every part raises. | `src/deedbox/errors.py` |
 | **ui** | Every window, dialog and the in-window document viewer, and the worker threads for extraction. Runs the expiry check when the main window opens. Owns the translation files. | `src/deedbox/ui/` — one file per window or dialog; translation sources in `ui/translations/` |
-| **app** | Start-up: builds the Qt application, loads the compiled translation for the user's language from `ui/translations/`, and opens the first window. | `src/deedbox/__main__.py` |
+| **app** | Start-up: builds the Qt application, loads the compiled translation for the system's language from `ui/translations/`, and opens the first window. | `src/deedbox/__main__.py` |
 | **packaging** | Building the installers: PyInstaller for Windows and macOS, the Flatpak for Linux, each bundling Tesseract (S1) and the compiled translations. Imports nothing from Deedbox; it packages the tree. | `packaging/` |
 
 **`vault` in the rules below means the whole `src/deedbox/vault/`
@@ -114,8 +114,10 @@ app ─► ui ─► vault ─► crypto
   languages (DEED-0035).
   Dates are shown in the user's locale format.
 - **Categories.** A built-in category is stored as a fixed key that `ui`
-  shows translated; one the user added is stored as typed. `suggest`
-  returns a key or the user's own text, never a translated name.
+  shows translated; one the user added is stored as typed. The metadata
+  records which of the two it is, so a user's category spelt like a key
+  stays the user's. `suggest` returns a key or the user's own text,
+  never a translated name.
 - **State.** An open vault is one `Vault` object. The key exists only in
   that object's memory while the vault is open, and is dropped on close.
   Decrypted documents live in memory only while shown.
