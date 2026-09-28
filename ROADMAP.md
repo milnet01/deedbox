@@ -331,45 +331,49 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Source: review-contract design.md loop 7, 2026-09-28.
   Lanes: design, vault.
 
-## Later (no version yet)
+## 0.2.0
 
-Ideas deliberately left out of 0.1.0. None is promised. Which of them become
-0.2.0 is decided after DEED-0011, the owner's week of real use.
+The release after 0.1.0. Its items were moved here from "Later" by the owner on 2026-09-28.
 
-- 💭 [DEED-0017] **Reminders while the app is closed.**
+- 📋 [DEED-0017] **Reminders while the app is closed.**
   `docs/discovery.md` rules it out for the first release only;
   `docs/brief.md` wants it only if it works on all three systems.
+  Planned for 0.2.0 by the owner, 2026-09-28.
   **Layman:** Deedbox could warn you about an expiring passport even when it isn't open.
   Kind: feature.
   Source: discovery-2026-09-27.
   Lanes: ui.
 
-- 💭 [DEED-0018] **Signed Windows and macOS installers.**
+- 📋 [DEED-0018] **Signed Windows and macOS installers.**
   DEED-0014 ships unsigned at first, by the owner's decision.
   macOS needs a paid Apple developer account.
+  Planned for 0.2.0 by the owner, 2026-09-28.
   **Layman:** Stops Windows and Mac warning that the app comes from an unknown developer.
   Kind: package.
   Source: owner-decision-2026-09-28.
   Lanes: packaging.
 
-- 💭 [DEED-0019] **Change the password, and strengthen an existing vault's password protection.**
+- 📋 [DEED-0019] **Change the password, and strengthen an existing vault's password protection.**
   Deferred in `docs/specs/DEED-0002-vault-format.md` § 9.
+  Planned for 0.2.0 by the owner, 2026-09-28.
   **Layman:** Lets you pick a new password, and makes an old vault as hard to crack as a new one.
   Kind: feature.
   Source: DEED-0002 spec § 9.
   Lanes: crypto, vault.
 
-- 💭 [DEED-0020] **Read-only vaults, and vaults on a network drive.**
+- 📋 [DEED-0020] **Read-only vaults, and vaults on a network drive.**
   Deferred in `docs/specs/DEED-0003-index-and-recovery.md` § 9.
   A network share's file locks may not work.
+  Planned for 0.2.0 by the owner, 2026-09-28.
   **Layman:** Opening a vault from a locked-down folder or a shared drive.
   Kind: feature.
   Source: DEED-0003 spec § 9.
   Lanes: vault.
 
-- 💭 [DEED-0021] **More than one vault.**
+- 📋 [DEED-0021] **More than one vault.**
   `docs/brief.md` leans to one vault, without hard-coding a
   single path.
+  Planned for 0.2.0 by the owner, 2026-09-28.
   **Layman:** Separate vaults, for example one for the household and one personal.
   Kind: feature.
   Source: brief-2026-09-27.
