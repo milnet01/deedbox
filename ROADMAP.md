@@ -288,6 +288,11 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   and verifies on Windows and macOS only. The dependency test must also
   let `update` use `tempfile` for a downloaded release (design rule 4),
   and the "updates on" setting is `ui`'s (design § Settings).
+  Build note (2026-09-28): the dependency test's ALLOWED_PARTS for
+  `ui` must also gain `update` (design rule 8). On the Flatpak, `ui`
+  starts the update service only when updates are on or the user asked
+  (design rule 7); the service refuses a release that widens sandbox
+  permissions (design rule 11).
   **Layman:** Deedbox can fetch and install its own new versions, but only if you switch that on.
   Kind: feature.
   Source: user-request-2026-09-28.

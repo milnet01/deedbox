@@ -67,10 +67,12 @@ The rules, strongest first. A test can check each by reading imports.
    vault file and holds no thread or Qt signal. Scanned PDF pages become
    images in memory; OCR hands those image bytes to the OCR tool through
    a pipe.
-7. **Only `update/fetch.py` opens a network connection**, and `ui` calls
-   it only after the user turned updates on or asked for a check. It sends nothing
-   about the user's documents. No other file imports a network library
-   (discovery: documents never leave the machine).
+7. **Only `update/fetch.py` opens a network connection.** `ui` starts
+   an update check — through `update`, or through Flatpak's update
+   service — only after the user turned updates on or asked for one. No
+   check sends anything about the user's documents. No other file
+   imports a network library (discovery: documents never leave the
+   machine).
 8. **`ui` may call** `vault`, `search`, `expiry`, `suggest`, `extract`,
    `export` and `update`. **It may not call** `crypto`, and it may not build a path
    inside the vault folder.
@@ -82,7 +84,10 @@ The rules, strongest first. A test can check each by reading imports.
     `src/deedbox/`.** It builds installers from the tree and the
     dependency lock; no Deedbox code may assume it runs installed. Only
     `update` asks how Deedbox was installed, and it does nothing when it
-    cannot tell.
+    cannot tell. Flatpak's update service installs a release only if it
+    asks for no more sandbox permissions than the installed one; a
+    Flatpak release that widens them reaches users only through their
+    software centre.
 
 ```
 app ─► ui ─► vault ─► crypto
@@ -116,7 +121,7 @@ app ─► ui ─► vault ─► crypto
   records. Adding writes content, then index, then metadata file.
   Editing writes index, then metadata file. Removing deletes the metadata
   file, then writes the index, then deletes the content file.
-- **Opening, in order.** Run `migrate`. Load the index; if it will not
+- **Opening, in order.** Take the `lock`. Run `migrate`. Load the index; if it will not
   decrypt, load its previous copy; if neither will, rebuild from the
   metadata files. Then reconcile against the files on disk:
   - a metadata file ahead of the index, or not listed in it, updates the
