@@ -161,6 +161,9 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: security.
   Lanes: crypto, vault.
   Source: design-2026-09-27.
+  Decided (2026-09-28, owner): seek a free or funded audit.
+  Apply to programmes that fund audits of open-source security
+  tools, and invite volunteer reviewers on the public repo.
 
 - 📋 [DEED-0013] **Help written for non-technical people.**
   Setup, backup by copying the vault folder, the forgotten-password
@@ -172,9 +175,9 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Lanes: ui, docs.
   Source: design-2026-09-27.
 
-- 📋 [DEED-0014] **Installers: signed Windows and macOS builds, Flatpak for Linux.**
+- 📋 [DEED-0014] **Installers: Windows and macOS builds (unsigned at first), Flatpak for Linux.**
   Build step 6. PyInstaller for Windows and macOS, Flatpak for Linux,
-  Tesseract bundled in all three, code signing budgeted. Serves S1.
+  Tesseract bundled in all three, unsigned at first. Serves S1.
   Done when someone who did not build it installs it on a fresh
   machine per system and files a document without help.
   Blocked-by: DEED-0009, DEED-0013
@@ -182,6 +185,9 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: package.
   Lanes: packaging.
   Source: design-2026-09-27.
+  Decided (2026-09-28, owner): ship unsigned at first. The
+  help explains the system warning and how to get past it. Signing
+  can come in a later release.
 
 - ✅ [DEED-0015] **Public repository, bug tracker and security contact.**
   Needs the owner's say on where the repository lives. `SECURITY.md`
@@ -202,3 +208,6 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: investigate.
   Lanes: repo.
   Source: design-2026-09-27.
+  Decided (2026-09-28, owner): Claude searches the public
+  trademark databases and app stores and writes up what it finds;
+  the owner decides. Not legal advice.
