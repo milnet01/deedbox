@@ -212,6 +212,16 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   trademark databases and app stores and writes up what it finds;
   the owner decides. Not legal advice.
 
+- 📋 [DEED-0022] **The local gate's documentation step checks something.**
+  `scripts/local-ci.sh`'s `documentation` step holds only the template's
+  example comments, so `--docs` prints "passed" having run nothing. The
+  same file says a check that did not run must not look like one that
+  passed. Wire in a real link and path check.
+  **Layman:** The pre-push check says the docs passed without looking at them; make it actually check links and paths.
+  Kind: chore.
+  Lanes: repo.
+  Source: in-session-2026-09-28.
+
 ## Later (no version yet)
 
 Ideas deliberately left out of 0.1.0. None is promised. Which of them become
