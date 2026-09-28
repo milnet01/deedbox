@@ -216,7 +216,7 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   trademark databases and app stores and writes up what it finds;
   the owner decides. Not legal advice.
 
-- 📋 [DEED-0022] **The local gate's documentation step checks something.**
+- ✅ [DEED-0022] **The local gate's documentation step checks something.**
   `scripts/local-ci.sh`'s `documentation` step holds only the template's
   example comments, so `--docs` prints "passed" having run nothing. The
   same file says a check that did not run must not look like one that
@@ -225,6 +225,9 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Kind: chore.
   Lanes: repo.
   Source: in-session-2026-09-28.
+  Shipped 2026-09-28: scripts/check_docs.py checks every relative link
+  in the tracked Markdown files resolves, in both gate modes. Anchors
+  are not checked, only files. tests/test_check_docs.py locks it.
 
 ## Later (no version yet)
 

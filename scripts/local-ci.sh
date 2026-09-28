@@ -55,8 +55,8 @@ need() {
 # Anything not needing a compiler or a full environment belongs here.
 
 step 'documentation'
-# e.g. need markdownlint && markdownlint .
-# e.g. check-doc-facts, link checking, spelling
+need uv
+uv run --locked python scripts/check_docs.py  # every relative link resolves
 
 if (( DOCS_ONLY )); then
     printf '\nlocal-ci: --docs passed; build and test legs skipped by design.\n' >&2
