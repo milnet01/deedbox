@@ -211,3 +211,47 @@ of success are cited by their `docs/discovery.md` labels, S1 to S10.
   Decided (2026-09-28, owner): Claude searches the public
   trademark databases and app stores and writes up what it finds;
   the owner decides. Not legal advice.
+
+## Later (no version yet)
+
+Ideas deliberately left out of 0.1.0. None is promised. Which of them become
+0.2.0 is decided after DEED-0011, the owner's week of real use.
+
+- 💭 [DEED-0017] **Reminders while the app is closed.**
+  `docs/discovery.md` rules it out for the first release only;
+  `docs/brief.md` wants it only if it works on all three systems.
+  **Layman:** Deedbox could warn you about an expiring passport even when it isn't open.
+  Kind: feature.
+  Lanes: ui.
+  Source: discovery-2026-09-27.
+
+- 💭 [DEED-0018] **Signed Windows and macOS installers.**
+  DEED-0014 ships unsigned at first, by the owner's decision.
+  macOS needs a paid Apple developer account.
+  **Layman:** Stops Windows and Mac warning that the app comes from an unknown developer.
+  Kind: package.
+  Lanes: packaging.
+  Source: owner-decision-2026-09-28.
+
+- 💭 [DEED-0019] **Change the password, and strengthen an existing vault's password protection.**
+  Deferred in `docs/specs/DEED-0002-vault-format.md` § 9.
+  **Layman:** Lets you pick a new password, and makes an old vault as hard to crack as a new one.
+  Kind: feature.
+  Lanes: crypto, vault.
+  Source: DEED-0002 spec § 9.
+
+- 💭 [DEED-0020] **Read-only vaults, and vaults on a network drive.**
+  Deferred in `docs/specs/DEED-0003-index-and-recovery.md` § 9.
+  A network share's file locks may not work.
+  **Layman:** Opening a vault from a locked-down folder or a shared drive.
+  Kind: feature.
+  Lanes: vault.
+  Source: DEED-0003 spec § 9.
+
+- 💭 [DEED-0021] **More than one vault.**
+  `docs/brief.md` leans to one vault, without hard-coding a
+  single path.
+  **Layman:** Separate vaults, for example one for the household and one personal.
+  Kind: feature.
+  Lanes: ui, vault.
+  Source: brief-2026-09-27.
